@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wyPurBfW)
 # IDG2100 2026 Full-Stack Web Development: Exam Project Description
 
 **NOTE:** this document is a draft and minor fixes and clarifications may be added to it in the days following its initial distribution.
