@@ -1,35 +1,62 @@
+import { verifyAccessToken } from "../utils/jwt.js";
 import { User } from "../models/user.js";
+import { SecurityIncident } from "../models/securityIncident.js";
 
-// For identifying whether the user is anonymous, a regular user
+// Identifies the user from the Authorization header
+// Sets req.user to the decoded token payload if valid
+// Falls back to anonymous if no token is provided
 export async function identifyUser(req, res, next) {
-    // figuring out who's requesting
-    const userId = Number(req.headers["x-user-id"]); // x = extended
+    const authHeader = req.headers["authorization"];
 
-    // If there's no header, then the user is anonymous
-    if (isNaN(userId)) {
+    // No token provided, treat as anon
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         req.user = { role: "anonymous" };
         return next();
     }
 
-    // see if the user exist and isn't banned
-    try {
-        const user = await User.findOne({ userId });
+    // Extract the token from "Bearer <token>"
+    const token = authHeader.split(" ")[1];
+    const decoded = verifyAccessToken(token);
 
-        if (!user) {
-            return res.status(404).json({ msg: "User was not found"});
-        }
-
-        if (user.isBanned) {
-            return res.status(403).json({ msg: "Your account has been banned" });
-        }
-
-        // full user body for the controllers
-        req.user = user;
-        next();
-    } catch (err) {
-        // Catches malformed user IDs
-        return res.status(401).json({ msg: "Invalid user ID", error: err.message });
+    // Token is invalid or expired
+    if (!decoded) {
+        // Unauthorized
+        return res.status(401).json({ msg: "Invalid or expired access token" });
     }
+
+    // Check if the IP in the token matches the current request IP
+    // If not, log a security incident and reject the request
+    if (decoded.ip !== req.ip) {
+        try {
+            await SecurityIncident.create({
+                type: "ip_mismatch",
+                userId: decoded.userId,
+                ip: req.ip,
+                userAgent: req.headers["user-agent"],
+                detail: `Token IP: ${decoded.ip}, Request IP: ${req.ip}`
+            });
+        } catch (err) {
+            // Log but don't block the incident logging failure
+            console.error("Failed to log security incident:", err.message);
+        }
+        return res.status(401).json({ msg: "Security incident detected, please log in again" });
+    }
+
+    // Check the user still exists and isn't banned
+    const user = await User.findOne({ userId: decoded.userId });
+
+    if (!user) {
+        return res.status(401).json({ msg: "User no longer exists" });
+    }
+
+    if (user.isBanned) {
+        // Forbidden
+        return res.status(403).json({ msg: "Your account has been banned" });
+    }
+
+    // Attach the full user to the request for use in controllers
+    req.user = user;
+    next();
 }
 
 // For routes that anonymous users can't access
@@ -37,7 +64,15 @@ export function requireUser(req, res, next) {
     if (req.user.role === "anonymous") {
         return res.status(401).json({ msg: "You must be logged in to do this" });
     }
+    next();
+}
 
+// For routes that require email verification
+// Called after requireUser
+export function requireVerified(req, res, next) {
+    if (!req.user.emailVerified) {
+        return res.status(403).json({ msg: "You must verify your email before doing this" });
+    }
     next();
 }
 
@@ -52,5 +87,6 @@ export function requireAdmin(req, res, next) {
 export default {
     identifyUser,
     requireUser,
+    requireVerified,
     requireAdmin
 };

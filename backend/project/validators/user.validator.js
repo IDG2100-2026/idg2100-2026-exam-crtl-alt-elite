@@ -3,8 +3,6 @@ import { findUserById } from "../services/user.services.js";
 
 import {
     MIN_ID,
-    MIN_USERNAME_LENGTH,
-    MAX_USERNAME_LENGTH,
     MIN_PWD_LENGTH,
     MAX_PWD_LENGTH,
     MIN_AGE,
@@ -49,50 +47,6 @@ export function validateGetUsers() {
     ];
 }
 
-// POST /api/users/register
-// Validates the request body for user registration
-export function validateRegisterUser() {
-    return [
-        body("username")
-            .trim()
-            .escape() // Replaces XSS-related characters with HTML equivalents
-            .isLength({ min: MIN_USERNAME_LENGTH, max: MAX_USERNAME_LENGTH})
-            .withMessage(`Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters`)
-            .matches(/^[a-zA-Z0-9_]+$/)
-            .withMessage("Username can only contain letters, numbers and underscores"),
-
-        body("email")
-            .trim()
-            .normalizeEmail() // Lowercases and normalizes the email
-            .isEmail()
-            .withMessage("You need to have a valid email"),
-
-        body("pwd")
-            .isLength({ min: MIN_PWD_LENGTH, max: MAX_PWD_LENGTH})
-            .withMessage(`Password must be between ${MIN_PWD_LENGTH} and ${MAX_PWD_LENGTH} characters`),
-
-        body("age")
-            .isInt({ min: MIN_AGE })
-            .withMessage(`You must be at least ${MIN_AGE} years old to register`)
-            .toInt()
-    ];
-}
-
-// POST /api/users/login
-// Validates the request body for updating a user profile
-export function validateLoginUser() {
-    return [
-        body("emailOrUsername")
-            .trim()
-            .notEmpty()
-            .withMessage("Email or username is required"),
-        
-        body("pwd")
-            .notEmpty()
-            .withMessage("You actually have to have a password")
-    ];
-}
-
 // PUT /api/users/:id
 // Validates the request body for updating a user profile
 // All fields are optional since the user can update one or more fields at a time
@@ -127,7 +81,5 @@ export function validateUpdateUser() {
 export default {
     validateUserId,
     validateGetUsers,
-    validateRegisterUser,
-    validateLoginUser,
     validateUpdateUser
 };
