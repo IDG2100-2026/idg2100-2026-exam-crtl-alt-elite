@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
+import { ACCESS_TOKEN_EXPIRY_MS, REFRESH_TOKEN_EXPIRY_MS } from "../config/constants.js";
 
 const {
     ACCESS_TOKEN_SECRET,
-    REFRESH_TOKEN_SECRET,
-    ACCESS_TOKEN_EXPIRY,
-    REFRESH_TOKEN_EXPIRY
+    REFRESH_TOKEN_SECRET
 } = process.env;
 
 // Signs a new access token
@@ -13,7 +12,7 @@ export function signAccessToken(userId, role, ip) {
     return jwt.sign(
         { userId, role, ip },
         ACCESS_TOKEN_SECRET,
-        { expiresIn: ACCESS_TOKEN_EXPIRY }
+        { expiresIn: Math.floor(ACCESS_TOKEN_EXPIRY_MS / 1000) }
     );
 }
 
@@ -23,7 +22,7 @@ export function signRefreshToken(userId) {
     return jwt.sign(
         { userId },
         REFRESH_TOKEN_SECRET,
-        { expiresIn: REFRESH_TOKEN_EXPIRY }
+        { expiresIn: Math.floor(ACCESS_TOKEN_EXPIRY_MS / 1000) }
     );
 }
 

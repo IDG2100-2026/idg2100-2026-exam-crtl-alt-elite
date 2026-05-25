@@ -56,3 +56,5 @@ export const PWD_HASH_KEYLEN = 64; // Output hash length in bytes
 
 /* Related to authentication */
 export const EMAIL_VERIFICATION_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes as it was specified
+export const ACCESS_TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
+export const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
