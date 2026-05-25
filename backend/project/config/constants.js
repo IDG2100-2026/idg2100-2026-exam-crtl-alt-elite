@@ -5,6 +5,7 @@ export const MIN_PWD_LENGTH = 8; // characters
 export const MAX_PWD_LENGTH = 64; // characters
 export const MIN_AGE = 18; // years 
 export const DEFAULT_ELO = 1000; // default elo score, according to google
+export const DEFAULT_POINTS = 100; // default amount of points players receive
 export const RECENT_GAMES = 10; // number
 export const MAX_LENGTH_ABOUT_ME = 512; // Characters
 
@@ -49,3 +50,7 @@ export const MATCHMAKING_INTERVAL_MS = 30000; // milliseconds, 30 seconds betwee
 // Nice to have a universal value for consistency
 export const PAGE = 1; // number
 export const LIMIT = 20; // number
+
+
+/* Related to hashing */
+export const PWD_HASH_KEYLEN = 64; // Output hash length in bytes
