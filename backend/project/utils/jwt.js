@@ -22,7 +22,7 @@ export function signRefreshToken(userId) {
     return jwt.sign(
         { userId },
         REFRESH_TOKEN_SECRET,
-        { expiresIn: Math.floor(ACCESS_TOKEN_EXPIRY_MS / 1000) }
+        { expiresIn: Math.floor(REFRESH_TOKEN_EXPIRY_MS / 1000) }
     );
 }
 
