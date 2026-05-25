@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
 import { Game } from "../models/game.js";
 import { GameVariant } from "../models/gameVariant.js";
-// import { User } from "../models/user.js";
+import { User } from "../models/user.js";
 import gameServices from "../services/game.services.js";
 
 import {
@@ -10,36 +9,39 @@ import {
 } from "../config/constants.js";
 
 // GET /api/games
-// Public, returns a paginated, filterable list of non-anonymous games
-export async function getAllGames(req, res) {
+// Public, returns a paginated, filterable list of games
+// Supports filtering by status, variantId, and userId
+export async function getAllGames(req, res, next) {
     try {
-        const { page = PAGE, limit = LIMIT, status, variantId, sort = "createdAt", order = "desc", userId } = req.query;
+        const {
+            page = PAGE,
+            limit = LIMIT,
+            status,
+            variantId,
+            sort = "createdAt",
+            order = "desc",
+            userId
+        } = req.query;
 
-        // Only show non-anonymous games in platform activity
-        // Only provided values get added to the query
-        const filter = { isAnonymous: false };
+        const filter = {};
         if (status) filter.status = status;
-        if (variantId) filter.variantId = new mongoose.Types.ObjectId(variantId);
-        if (userId) filter.$or = [
-            { "playerOne.userId": Number(userId) },
-            { "playerTwo.userId": Number(userId) }
-        ];
+        if (variantId) filter.variantId = variantId;
 
-        // Ternary operator
-        // asc = ascending order
+        // Filter games where a specific user is a player
+        // Uses the players array instead of playerOne/playerTwo
+        if (userId) filter["players.userId"] = Number(userId);
+
         const sortOrder = order === "asc" ? 1 : -1;
 
-        // Same logic for filtering, sorting and pagination as always
         const games = await Game.find(filter)
             .populate("variantId")
             .sort({ [sort]: sortOrder })
             .skip((page - 1) * limit)
             .limit(Number(limit));
 
-        // Count all the documents in the collection
         const total = await Game.countDocuments(filter);
 
-        // Enrich player data with ELO and username from User model
+        // Enrich each game with player usernames and ELO ratings
         const enrichedGames = await Promise.all(
             games.map(game => gameServices.enrichGameWithUserInfo(game.toObject()))
         );
@@ -51,267 +53,194 @@ export async function getAllGames(req, res) {
             games: enrichedGames
         });
     } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to get games", error: err.message });
+        next(err);
     }
 }
 
 // GET /api/games/:id
-// Public, returns a single game by gameId, anyone can spectate
-export async function getGame(req, res) {
+// Public, returns a single game by gameId
+// Filters out other players' rolls if the game is ongoing
+export async function getGame(req, res, next) {
     try {
         const game = await Game.findOne({ gameId: Number(req.validData.id) })
             .populate("variantId");
-        
+
         if (!game) {
-            // Not found
             return res.status(404).json({ msg: "Game was not found" });
         }
 
-        // Enrich player data with ELO from User model
         const g = game.toObject();
+
+        // Enrich with player usernames and ELO ratings
         await gameServices.enrichGameWithUserInfo(g);
 
+        // Filter out other players' unrevealed rolls
+        // Each player can only see their own rolls until reveal phase
+        const requestingUserId = req.user?.userId || null;
+        g.players = gameServices.filterRollsForUser(g.players, requestingUserId);
+
         res.json(g);
-    } catch(err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to get game", error: err.message });
+    } catch (err) {
+        next(err);
     }
 }
 
-// POST /api/games/matchmake
-// All types of users enters the matchmaking queue
-// Assigns to matchmakeAnonymous or matchmakeRegistered based on user type
-export async function matchmakeGame(req, res) {
+// POST /api/games
+// Registered users only, creates a new game room
+// Game starts automatically when the required number of players have joined
+export async function createRoom(req, res, next) {
     try {
-        const { variantId, waitingSince } = req.validData;
+        const { variantId } = req.validData;
 
-        if (!variantId) {
-            // Bad request
-            return res.status(400).json({ msg: "variantId is required" });
-        }
-
-        // Validate to see if the game variant exists
+        // Check the variant exists
         const variant = await GameVariant.findById(variantId);
         if (!variant) {
-            // Could probably be a 406 Not acceptable or 404 as well
-            // Bad request
-            return res.status(400).json({ msg: "Invalid game variant" });
+            return res.status(404).json({ msg: "Game variant not found" });
         }
 
-        // Checks if user is anonymous
-        const isAnonymous = req.user.role === "anonymous";
-
-        // Anonymous users can only be matched with other anonymous users
-        if (isAnonymous) {
-            const { matched, game } = await gameServices.matchmakeAnonymous(variantId);
-            const msg = matched ? "Matched with anonymous opponent" : "Waiting for an anonymous opponent";
-
-            // OK, else Created
-            return res.status(matched ? 200 : 201).json({ msg, game });
+        // Check the user has enough points for the buy-in
+        const user = await User.findOne({ userId: req.user.userId });
+        if (user.points < variant.buyIn) {
+            return res.status(400).json({
+                msg: `You need at least ${variant.buyIn} points to join this game`
+            });
         }
 
-        // Registered user matchmaking, try to find a suitable ELO opponent
-        const { matched, game } = await gameServices.matchmakeRegistered(
-            req.user.userId,
-            variantId,
-            req.user.eloRating,
-            waitingSince || new Date()
+        // Reserve the buy-in points from the user's profile
+        await User.updateOne(
+            { userId: req.user.userId },
+            { $inc: { points: -variant.buyIn } }
         );
 
-        const msg = matched ? "Match found!" : "Waiting for a suitable opponent";
-        // OK, else Created
-        return res.status(matched ? 200 : 201).json({ msg, game });
+        // Create the game room with the creator as the first player
+        const game = await gameServices.createRoom({
+            variantId,
+            userId: req.user.userId,
+            buyIn: variant.buyIn
+        });
 
+        res.status(201).json({ msg: "Game room created", game });
     } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Could not matchmake, sorry", error: err.message });
+        next(err);
     }
 }
 
-// POST /api/games/invite
-// Registered users only, invites another user to a game directly
-// Creates a game with status "invited" and stores the invitedUserId
-// export async function inviteToGame(req, res) {
-//     try {
-//         const { variantId, invitedUserId } = req.validData;
-
-//         // Check the variant exists
-//         const variant = await GameVariant.findById(variantId);
-//         if (!variant) {
-//             // Bad request
-//             return res.status(400).json({ msg: "Invalid game variant" });
-//         }
-
-//         // Check the invited user exists
-//         const invitedUser = await User.findOne({ userId: invitedUserId });
-//         if (!invitedUser) {
-//             // Not found
-//             return res.status(404).json({ msg: "Invited user was not found" });
-//         }
-
-//         // Can't invite yourself
-//         if (invitedUserId === req.user.userId) {
-//             // Bad request
-//             return res.status(400).json({ msg: "You can't invite yourself to a game" });
-//         }
-
-//         // Create the game with status "invited"
-//         const game = await gameServices.createGame({
-//             playerOne: { userId: req.user.userId, rounds: [], score: 0 },
-//             variantId,
-//             isAnonymous: false,
-//             status: "invited",
-//             invitedUserId
-//         });
-
-//         // Created
-//         res.status(201).json({ msg: `Invite sent to ${invitedUser.username}`, game });
-//     } catch (err) {
-//         // Internal server error
-//         res.status(500).json({ msg: "Failed to send invite", error: err.message });
-//     }
-// }
-
-// POST /api/games/:id/accept
-// Registered users only, accepts game invite
-// Only the invited user can accept
-// export async function acceptInvite(req, res) {
-//     try {
-//         const game = await Game.findOne({ gameId: Number(req.validData.id) });
-
-//         if (!game) {
-//             // Not found
-//             return res.status(404).json({ msg: "Game was not found" });
-//         }
-
-//         // Only invited games can be accepted
-//         if (game.status !== "invited") {
-//             // Bad request
-//             return res.status(400).json({ msg: "This game is not an invite" });
-//         }
-
-//         // Only the invited user can accept
-//         if (game.invitedUserId !== req.user.userId) {
-//             // Forbidden
-//             return res.status(403).json({ msg: "You were not invited to this game" });
-//         }
-
-//         // Add playerTwo and start the game
-//         game.playerTwo = { userId: req.user.userId, rounds: [], score: 0 };
-//         game.status = "ongoing";
-//         game.startedAt = new Date();
-//         await game.save();
-
-//         res.json({ msg: "Invite accepted, game is starting!", game });
-//     } catch (err) {
-//         // Internal server error
-//         res.status(500).json({ msg: "Failed to accept invite", error: err.message });
-//     }
-// }
-
-// POST /api/games/:id/decline
-// Registered users only, declines game invite
-// Only the invited user can decline
-// export async function declineInvite(req, res) {
-//     try {
-//         const game = await Game.findOne({ gameId: Number(req.validData.id) });
-
-//         if (!game) {
-//             // Not found
-//             return res.status(404).json({ msg: "Game was not found" });
-//         }
-
-//         // Only invited games can be declined
-//         if (game.status !== "invited") {
-//             // Bad request
-//             return res.status(400).json({ msg: "This game is not an invite" });
-//         }
-
-//         // Only the invited user can decline
-//         if (game.invitedUserId !== req.user.userId) {
-//             // Forbidden
-//             return res.status(403).json({ msg: "You were not invited to this game" });
-//         }
-
-//         // Set status to declined
-//         game.status = "declined";
-//         await game.save();
-
-//         res.json({ msg: "Invite declined" });
-//     } catch (err) {
-//         // Internal server error
-//         res.status(500).json({ msg: "Failed to decline invite", error: err.message });
-//     }
-// }
-
-// PUT /api/games/:id/result
-// Registered users only, submits the final result of a game and updates ELOs
-export async function submitGameResult(req, res) {
+// POST /api/games/:id/players
+// Registered users only, joins an existing game room
+// Game starts automatically when the required number of players have joined
+export async function joinRoom(req, res, next) {
     try {
-        // Have to find a game
+        const game = await Game.findOne({ gameId: Number(req.validData.id) })
+            .populate("variantId");
+
+        if (!game) {
+            return res.status(404).json({ msg: "Game was not found" });
+        }
+
+        // Can only join a room that hasn't started yet
+        if (game.status !== "room") {
+            return res.status(400).json({ msg: "This game is no longer accepting players" });
+        }
+
+        // Check the user isn't already in the game
+        const alreadyJoined = game.players.some(p => p.userId === req.user.userId);
+        if (alreadyJoined) {
+            return res.status(409).json({ msg: "You are already in this game" });
+        }
+
+        // Check the room isn't already full
+        if (game.players.length >= game.variantId.numPlayers) {
+            return res.status(400).json({ msg: "This game room is full" });
+        }
+
+        // Check the user has enough points for the buy-in
+        const user = await User.findOne({ userId: req.user.userId });
+        if (user.points < game.variantId.buyIn) {
+            return res.status(400).json({
+                msg: `You need at least ${game.variantId.buyIn} points to join this game`
+            });
+        }
+
+        // Reserve the buy-in points from the user's profile
+        await User.updateOne(
+            { userId: req.user.userId },
+            { $inc: { points: -game.variantId.buyIn } }
+        );
+
+        // Add the player to the game
+        game.players.push({
+            userId: req.user.userId,
+            points: game.variantId.buyIn,
+            currentBet: 0,
+            abandoned: false,
+            rounds: []
+        });
+
+        // Start the game automatically if the room is now full
+        if (game.players.length === game.variantId.numPlayers) {
+            game.status = "ongoing";
+            game.startedAt = new Date();
+        }
+
+        await game.save();
+
+        res.json({
+            msg: game.status === "ongoing" ? "Game is starting!" : "Joined game room",
+            game
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// DELETE /api/games/:id/players/:userId
+// Registered users only, leaves a game room before it starts
+// Can only leave a room, not an ongoing game
+export async function leaveRoom(req, res, next) {
+    try {
         const game = await Game.findOne({ gameId: Number(req.validData.id) });
 
         if (!game) {
-            // Not found
             return res.status(404).json({ msg: "Game was not found" });
         }
 
-        if (game.status === "finished") {
-            // Bad request
-            return res.status(400).json({ msg: "Can't change the results of a game after it's been finished" });
+        // Can only leave a room that hasn't started yet
+        if (game.status !== "room") {
+            return res.status(400).json({ msg: "You can't leave a game that has already started" });
         }
 
-        // Only players in the game can submit their results
-        const isPlayerOne = game.playerOne.userId === req.user.userId; // Returns true or false
-        const isPlayerTwo = game.playerTwo.userId === req.user.userId;
-        if (!isPlayerOne && !isPlayerTwo) {
-            // Forbidden
-            return res.status(403).json({ msg: "You are not a player in this game" });
+        // Check the user is actually in the game
+        const playerIndex = game.players.findIndex(p => p.userId === req.user.userId);
+        if (playerIndex === -1) {
+            return res.status(403).json({ msg: "You are not in this game" });
         }
 
-        // The scores from the game get saved here
-        const { playerOneScore, playerTwoScore } = req.validData;
+        // Remove the player from the game
+        game.players.splice(playerIndex, 1);
 
-        if (playerOneScore === undefined || playerTwoScore === undefined) {
-            // Bad request
-            return res.status(400).json({ msg: "The scores of each of the players are required" });
+        // If no players left, cancel the game
+        if (game.players.length === 0) {
+            game.status = "cancelled";
         }
 
-        // Update scores and determine winner
-        game.playerOne.score = playerOneScore;
-        game.playerTwo.score = playerTwoScore;
-        // Checks who has the highest score and is therefore the winner
-        game.winnerId = gameServices.determineWinner(
-            game.playerOne.userId, playerOneScore,
-            game.playerTwo.userId, playerTwoScore
-        );
-        game.status = "finished";
-        game.finishedAt = new Date();
         await game.save();
 
-        // Update ELO ratings for both players (not for anonymous games)
-        if (!game.isAnonymous) {
-            await gameServices.updateELORatings(
-                game.playerOne.userId,
-                game.playerTwo.userId,
-                playerOneScore,
-                playerTwoScore,
-                game._id
-            );
-        }
+        // Return the buy-in points to the user's profile
+        await User.updateOne(
+            { userId: req.user.userId },
+            { $inc: { points: game.variantId.buyIn } }
+        );
 
-        res.json({ msg: "Game result submitted", game });
-
+        res.json({ msg: "Left game room successfully" });
     } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to submit game result", error: err.message });
+        next(err);
     }
 }
 
 export default {
     getAllGames,
     getGame,
-    matchmakeGame,
-    submitGameResult
+    createRoom,
+    joinRoom,
+    leaveRoom
 };
