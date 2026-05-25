@@ -1,0 +1,88 @@
+.homeContainer {
+    min-height: 100vh;
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+.hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.mainImg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    filter: brightness(0.6);
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    padding: 2rem;
+    color: white;
+    gap: 1rem;
+}
+
+.heroTitle {
+    font-size: var(--font-size-title);
+    font-style: italic;
+    margin: 0;
+}
+
+.heroSubtitle {
+    font-size: 1rem;
+    font-style: italic;
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* button */
+.btnCreate {
+    font-size: 1.2rem;
+    padding: 0.8rem 1.6rem;
+    border-radius: 12px;
+    background: linear-gradient(#eac646, #b66c02);
+    color: black;
+    font-weight: bold;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btnCreate:hover {
+    background: linear-gradient(#ccac3b, #a76303);
+}
+
+.btnCreate:active {
+    transform: scale(0.97);
+}
+
+
+/* section */
+.lobbySection,
+.topGamesSection {
+    padding: 4rem 1.5rem;
+    background: var(--color-secondary);
+    text-align: center;
+}
+
+.lobbySection h2,
+.topGamesSection h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+
