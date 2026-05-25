@@ -51,6 +51,8 @@ export const MATCHMAKING_INTERVAL_MS = 30000; // milliseconds, 30 seconds betwee
 export const PAGE = 1; // number
 export const LIMIT = 20; // number
 
-
 /* Related to hashing */
 export const PWD_HASH_KEYLEN = 64; // Output hash length in bytes
+
+/* Related to authentication */
+export const EMAIL_VERIFICATION_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes as it was specified
