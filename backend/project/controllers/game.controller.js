@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Game } from "../models/game.js";
 import { GameVariant } from "../models/gameVariant.js";
-import { User } from "../models/user.js";
+// import { User } from "../models/user.js";
 import gameServices from "../services/game.services.js";
 
 import {
@@ -132,118 +132,118 @@ export async function matchmakeGame(req, res) {
 // POST /api/games/invite
 // Registered users only, invites another user to a game directly
 // Creates a game with status "invited" and stores the invitedUserId
-export async function inviteToGame(req, res) {
-    try {
-        const { variantId, invitedUserId } = req.validData;
+// export async function inviteToGame(req, res) {
+//     try {
+//         const { variantId, invitedUserId } = req.validData;
 
-        // Check the variant exists
-        const variant = await GameVariant.findById(variantId);
-        if (!variant) {
-            // Bad request
-            return res.status(400).json({ msg: "Invalid game variant" });
-        }
+//         // Check the variant exists
+//         const variant = await GameVariant.findById(variantId);
+//         if (!variant) {
+//             // Bad request
+//             return res.status(400).json({ msg: "Invalid game variant" });
+//         }
 
-        // Check the invited user exists
-        const invitedUser = await User.findOne({ userId: invitedUserId });
-        if (!invitedUser) {
-            // Not found
-            return res.status(404).json({ msg: "Invited user was not found" });
-        }
+//         // Check the invited user exists
+//         const invitedUser = await User.findOne({ userId: invitedUserId });
+//         if (!invitedUser) {
+//             // Not found
+//             return res.status(404).json({ msg: "Invited user was not found" });
+//         }
 
-        // Can't invite yourself
-        if (invitedUserId === req.user.userId) {
-            // Bad request
-            return res.status(400).json({ msg: "You can't invite yourself to a game" });
-        }
+//         // Can't invite yourself
+//         if (invitedUserId === req.user.userId) {
+//             // Bad request
+//             return res.status(400).json({ msg: "You can't invite yourself to a game" });
+//         }
 
-        // Create the game with status "invited"
-        const game = await gameServices.createGame({
-            playerOne: { userId: req.user.userId, rounds: [], score: 0 },
-            variantId,
-            isAnonymous: false,
-            status: "invited",
-            invitedUserId
-        });
+//         // Create the game with status "invited"
+//         const game = await gameServices.createGame({
+//             playerOne: { userId: req.user.userId, rounds: [], score: 0 },
+//             variantId,
+//             isAnonymous: false,
+//             status: "invited",
+//             invitedUserId
+//         });
 
-        // Created
-        res.status(201).json({ msg: `Invite sent to ${invitedUser.username}`, game });
-    } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to send invite", error: err.message });
-    }
-}
+//         // Created
+//         res.status(201).json({ msg: `Invite sent to ${invitedUser.username}`, game });
+//     } catch (err) {
+//         // Internal server error
+//         res.status(500).json({ msg: "Failed to send invite", error: err.message });
+//     }
+// }
 
 // POST /api/games/:id/accept
 // Registered users only, accepts game invite
 // Only the invited user can accept
-export async function acceptInvite(req, res) {
-    try {
-        const game = await Game.findOne({ gameId: Number(req.validData.id) });
+// export async function acceptInvite(req, res) {
+//     try {
+//         const game = await Game.findOne({ gameId: Number(req.validData.id) });
 
-        if (!game) {
-            // Not found
-            return res.status(404).json({ msg: "Game was not found" });
-        }
+//         if (!game) {
+//             // Not found
+//             return res.status(404).json({ msg: "Game was not found" });
+//         }
 
-        // Only invited games can be accepted
-        if (game.status !== "invited") {
-            // Bad request
-            return res.status(400).json({ msg: "This game is not an invite" });
-        }
+//         // Only invited games can be accepted
+//         if (game.status !== "invited") {
+//             // Bad request
+//             return res.status(400).json({ msg: "This game is not an invite" });
+//         }
 
-        // Only the invited user can accept
-        if (game.invitedUserId !== req.user.userId) {
-            // Forbidden
-            return res.status(403).json({ msg: "You were not invited to this game" });
-        }
+//         // Only the invited user can accept
+//         if (game.invitedUserId !== req.user.userId) {
+//             // Forbidden
+//             return res.status(403).json({ msg: "You were not invited to this game" });
+//         }
 
-        // Add playerTwo and start the game
-        game.playerTwo = { userId: req.user.userId, rounds: [], score: 0 };
-        game.status = "ongoing";
-        game.startedAt = new Date();
-        await game.save();
+//         // Add playerTwo and start the game
+//         game.playerTwo = { userId: req.user.userId, rounds: [], score: 0 };
+//         game.status = "ongoing";
+//         game.startedAt = new Date();
+//         await game.save();
 
-        res.json({ msg: "Invite accepted, game is starting!", game });
-    } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to accept invite", error: err.message });
-    }
-}
+//         res.json({ msg: "Invite accepted, game is starting!", game });
+//     } catch (err) {
+//         // Internal server error
+//         res.status(500).json({ msg: "Failed to accept invite", error: err.message });
+//     }
+// }
 
 // POST /api/games/:id/decline
 // Registered users only, declines game invite
 // Only the invited user can decline
-export async function declineInvite(req, res) {
-    try {
-        const game = await Game.findOne({ gameId: Number(req.validData.id) });
+// export async function declineInvite(req, res) {
+//     try {
+//         const game = await Game.findOne({ gameId: Number(req.validData.id) });
 
-        if (!game) {
-            // Not found
-            return res.status(404).json({ msg: "Game was not found" });
-        }
+//         if (!game) {
+//             // Not found
+//             return res.status(404).json({ msg: "Game was not found" });
+//         }
 
-        // Only invited games can be declined
-        if (game.status !== "invited") {
-            // Bad request
-            return res.status(400).json({ msg: "This game is not an invite" });
-        }
+//         // Only invited games can be declined
+//         if (game.status !== "invited") {
+//             // Bad request
+//             return res.status(400).json({ msg: "This game is not an invite" });
+//         }
 
-        // Only the invited user can decline
-        if (game.invitedUserId !== req.user.userId) {
-            // Forbidden
-            return res.status(403).json({ msg: "You were not invited to this game" });
-        }
+//         // Only the invited user can decline
+//         if (game.invitedUserId !== req.user.userId) {
+//             // Forbidden
+//             return res.status(403).json({ msg: "You were not invited to this game" });
+//         }
 
-        // Set status to declined
-        game.status = "declined";
-        await game.save();
+//         // Set status to declined
+//         game.status = "declined";
+//         await game.save();
 
-        res.json({ msg: "Invite declined" });
-    } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to decline invite", error: err.message });
-    }
-}
+//         res.json({ msg: "Invite declined" });
+//     } catch (err) {
+//         // Internal server error
+//         res.status(500).json({ msg: "Failed to decline invite", error: err.message });
+//     }
+// }
 
 // PUT /api/games/:id/result
 // Registered users only, submits the final result of a game and updates ELOs
@@ -313,8 +313,5 @@ export default {
     getAllGames,
     getGame,
     matchmakeGame,
-    inviteToGame,
-    acceptInvite,
-    declineInvite,
     submitGameResult
 };

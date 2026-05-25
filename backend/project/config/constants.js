@@ -9,24 +9,36 @@ export const DEFAULT_POINTS = 100; // default amount of points players receive
 export const RECENT_GAMES = 10; // number
 export const MAX_LENGTH_ABOUT_ME = 512; // Characters
 
+
 /* Related to id creation */
 export const MIN_ID = 0; // numbers
+
 
 /* Related to gameVariant model */
 export const MIN_ROUNDS = 3; // number
 export const MIDRANGE_ROUNDS = 5; // number 
 export const MAX_ROUNDS = 7; // number
-export const MIN_TIME = 5; // seconds 
-export const MIDRANGE_TIME = 7; // seconds
-export const MAX_TIME = 10; // seconds
-// i see that the task is 3/5/7 seconds per round, but i feel like even 7 seconds is almost too little
-// are you not supposed to be able to hold the dice? How will you do that with less than 7 seconds to spare?
-// don't call me out, it can easily be changed to 3 5 7
+
+// Total seconds for all rounds, not per round
+export const MIN_TIME = 10; // seconds
+export const MIDRANGE_TIME = 30; // seconds
+export const MAX_TIME = 90; // seconds
+
+// Number of players per game
+export const MIN_PLAYERS_PER_GAME = 2;
+export const MID_PLAYERS_PER_GAME = 3;
+export const MAX_PLAYERS_PER_GAME = 5;
+
+// Buy-in options in points
+export const MIN_BUYIN = 1; // number of points
+export const MID_BUYIN = 10; // number of points
+export const MAX_BUYIN = 50; // number of points
 
 
 /* Related to comment model */
 export const MIN_COMMENT_LENGTH = 2; // characters
 export const MAX_COMMENT_LENGTH = 512; // characters
+
 
 /* Related to tournament model */
 export const MIN_TITLE_LENGTH = 2; // characters
@@ -38,11 +50,13 @@ export const LOW_RANGE_PLAYERS = 8; // number of players
 export const HIGH_RANGE_PLAYERS = 16; // numbers of players
 export const MAX_PLAYERS = 32; // numbers of players
 
+
 /* Related to ELO ratings, standard ELO rating constants */
 export const ELO_K_FACTOR = 32; // number, how much a single game can change  a player's ELO
 export const ELO_INITIAL_RANGE = 100; // number, initial ELO range for matchmaking
 export const ELO_RANGE_INCREMENT = 50; // number, how much the range expands per time step
 export const MATCHMAKING_INTERVAL_MS = 30000; // milliseconds, 30 seconds between range expansions
+
 
 /* Related to Pagination */
 // It's not like it's a secret, but more because I'll only have to change it 
@@ -51,8 +65,10 @@ export const MATCHMAKING_INTERVAL_MS = 30000; // milliseconds, 30 seconds betwee
 export const PAGE = 1; // number
 export const LIMIT = 20; // number
 
+
 /* Related to hashing */
 export const PWD_HASH_KEYLEN = 64; // Output hash length in bytes
+
 
 /* Related to authentication */
 export const EMAIL_VERIFICATION_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes as it was specified

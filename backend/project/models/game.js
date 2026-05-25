@@ -6,7 +6,7 @@ import {
 } from "../config/constants.js";
 
 const gameSchema = new mongoose.Schema({
-    // Custom game ID, auto-generated in the same way as userId
+    // Custom game ID, auto-generated in pre("validate") hook
     gameId: {
         type: Number,
         min: MIN_ID,
@@ -16,15 +16,14 @@ const gameSchema = new mongoose.Schema({
         unique: true
     },
 
-    // References playerSchema to see which player it is and how many rounds they won
-    playerOne: {
-        type: playerSchema,
-        required: true
-    },
-
-    // Not required because of waiting games doesn't have a player 2 yet
-    playerTwo: {
-        type: playerSchema
+    // Array of players in the game, between 2 and 5
+    // Each player entry tracks their state throughout the game
+    players: {
+        type: [playerSchema],
+        validate: {
+            validator: (arr) => arr.length >= 2 && arr.length <= 5,
+            message: "A game must have between 2 and 5 players"
+        }
     },
 
     // References the GameVariant model to know the rules of this game
@@ -34,30 +33,52 @@ const gameSchema = new mongoose.Schema({
         required: true
     },
 
-    // userId of the winner, null if the game is still ongoing or a draw
-    // A controller sets it when the game finishes
-    winnerId: {
+    // Total points currently in the pot
+    // Increases as players bet, won by the round winner
+    pot: {
         type: Number,
-        default: null
+        default: 0,
+        min: [0, "Pot can't be negative"]
     },
 
-    // status of the game
-    // included to make logic easier later
+    // Current status of the game
+    // room - waiting for players to join
+    // ongoing - game is in progress
+    // finished - game has ended
+    // cancelled - game was cancelled before it started
     status: {
         type: String,
-        enum: ["waiting", "invited", "ongoing", "finished", "declined"],
-        default: "waiting"
+        enum: ["room", "ongoing", "finished", "cancelled"],
+        default: "room"
     },
 
-    // Anon games are saved but hidden from platform activity
-    isAnonymous: {
-        type: Boolean,
-        default: false
+    // Which round the game is currently on, starting from 1
+    currentRound: {
+        type: Number,
+        default: 1,
+        min: 1
     },
 
-    // The userId of the player who was invited to this game
-    // null for matchmade games, set when playerOne invites someone directly
-    invitedUserId: {
+    // Current phase within the round
+    // rolling - players are rolling and holding dice
+    // betting - players are betting, matching, raising or folding
+    // reveal - dice are revealed and round winner is determined
+    currentPhase: {
+        type: String,
+        enum: ["rolling", "betting", "reveal"],
+        default: "rolling"
+    },
+
+    // userId of the winner, null until the game is finished
+    // Array to handle draws between multiple players
+    winnerId: {
+        type: [Number],
+        default: []
+    },
+
+    // Whether this game is part of a tournament
+    // null for regular games
+    tournamentId: {
         type: Number,
         default: null
     },

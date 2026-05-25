@@ -79,30 +79,31 @@ export async function createGame({ playerOne, variantId, isAnonymous, status = "
 
 /* Anonymous matchmaking helper */
 // Tries to find a waiting anonymous game, otherwise creates one
-export async function matchmakeAnonymous(variantId) {
-    const waitingGame = await Game.findOne({
-        status: "waiting",
-        isAnonymous: true,
-        variantId
-    });
+// export async function matchmakeAnonymous(variantId) {
+//     const waitingGame = await Game.findOne({
+//         status: "waiting",
+//         isAnonymous: true,
+//         variantId
+//     });
 
-    if (waitingGame) {
-        // Join the existing anonymous game as playerTwo
-        waitingGame.playerTwo = { userId: null, rounds: [], score: 0 };
-        waitingGame.status = "ongoing";
-        waitingGame.startedAt = new Date();
-        await waitingGame.save();
-        return { matched: true, game: waitingGame };
-    }
+//     if (waitingGame) {
+//         // Join the existing anonymous game as playerTwo
+//         waitingGame.playerTwo = { userId: null, rounds: [], score: 0 };
+//         waitingGame.status = "ongoing";
+//         waitingGame.startedAt = new Date();
+//         await waitingGame.save();
+//         return { matched: true, game: waitingGame };
+//     }
 
-    // No match found, create a new waiting anonymous game
-    const newGame = await createGame({
-        playerOne: { userId: null, rounds: [], score: 0 },
-        variantId,
-        isAnonymous: true
-    });
-    return { matched: false, game: newGame };
-}
+//     // No match found, create a new waiting anonymous game
+//     const newGame = await createGame({
+//         playerOne: { userId: null, rounds: [], score: 0 },
+//         variantId,
+//         isAnonymous: true
+//     });
+//     return { matched: false, game: newGame };
+// }
+// May no longer be needed, because anons is no longer allowed to start and play games
 
 /* Registered user matchmaking helper */
 // Tries to find a waiting game within ELO range, otherwise it creates one
@@ -177,7 +178,6 @@ export default {
     updateRecentGames,
     updateELORatings,
     createGame,
-    matchmakeAnonymous,
     matchmakeRegistered,
     enrichGameWithUserInfo
 };
