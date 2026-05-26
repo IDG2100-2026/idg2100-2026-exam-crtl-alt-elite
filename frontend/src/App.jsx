@@ -6,6 +6,11 @@ import Home from './pages/HomePage/Home';
 import CreateGame from './pages/CreateGame/CreateGame';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
+import AboutPage from './pages/StaticPages/AboutPage';
+import AboutDicePage from './pages/StaticPages/AboutDicePage';
+import TermsPage from './pages/StaticPages/TermsPage';
+import PrivacyPage from './pages/StaticPages/PrivacyPage';
+import NotFoundPage from './pages/StaticPages/NotFoundPage';
 
 
 function App() {
@@ -14,11 +19,16 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/createGame" element={<CreateGame />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route index element={<Home />} />
+            <Route path="createGame" element={<CreateGame />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="howToPlay" element={<AboutDicePage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
