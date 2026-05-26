@@ -1,0 +1,77 @@
+.page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: left;
+}
+
+.title {
+    margin-bottom: 0.25rem;
+}
+
+.sub {
+    color: var(--color-text);
+    opacity: 0.7;
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.formGroup label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.formGroup input {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.formGroup input:focus {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 1px;
+}
+
+.error {
+    color: #c0392b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.switchLink {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.switchLink a {
+    color: var(--color-secondary);
+    font-weight: 500;
+}
