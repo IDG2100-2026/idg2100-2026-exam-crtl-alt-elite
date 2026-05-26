@@ -1,22 +1,20 @@
 import { query } from "express-validator";
+import { validatePagination } from "./shared.validator.js";
 
+// GET /api/leaderboard?sort=elo&page=1&limit=20&variantId=123
 export function validateGetLeaderboard() {
     return [
-        query("page")
+        ...validatePagination(), // Shared pagination validators
+
+        query("sort")
             .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-        query("limit")
+            .isIn(["elo", "wins", "winPercentage", "totalGames"])
+            .withMessage("sort must be elo, wins, winPercentage or totalGames"),
+
+        query("variantId")
             .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt(),
-        // any other filters specific to that resource
-        query("status")
-            .optional()
-            .isIn(["waiting", "ongoing", "finished"])
-            .withMessage("status must be waiting, ongoing or finished")
+            .isMongoId()
+            .withMessage("variantId must be a valid MongoDB ID")
     ];
 }
 

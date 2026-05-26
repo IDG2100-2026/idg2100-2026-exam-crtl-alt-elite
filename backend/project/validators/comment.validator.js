@@ -1,9 +1,9 @@
 import { body, param, query } from "express-validator";
+import { validatePagination } from "./shared.validator.js";
 
 import { MIN_COMMENT_LENGTH, MAX_COMMENT_LENGTH } from "../config/constants.js";
 
-// Valid target types for comments 
-const VALID_TARGET_TYPES = [ "game", "tournament"];
+const VALID_TARGET_TYPES = ["game", "tournament"];
 
 // Validates the commentId route parameter
 // Used in deleteComment
@@ -19,28 +19,18 @@ export function validateCommentId() {
 // Validates the query parameters for getting comments
 export function validateGetComments() {
     return [
+        ...validatePagination(), // Shared pagination validators
+
         query("targetId")
             .notEmpty()
             .withMessage("targetId is required"),
-        
+
         query("targetType")
             .notEmpty()
             .withMessage("targetType is required")
             .bail()
             .isIn(VALID_TARGET_TYPES)
-            .withMessage("targetType must be either 'game' or 'tournament'"),
-
-        query("page")
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt()
+            .withMessage("targetType must be either 'game' or 'tournament'")
     ];
 }
 
@@ -48,17 +38,7 @@ export function validateGetComments() {
 // Validates pagination query parameters for getting recent comments
 export function validateGetRecentComments() {
     return [
-        query("page")
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt()
+        ...validatePagination() // Shared pagination validators
     ];
 }
 
@@ -69,7 +49,7 @@ export function validateCreateComment() {
         body("targetId")
             .notEmpty()
             .withMessage("targetId is required"),
-        
+
         body("targetType")
             .notEmpty()
             .withMessage("targetType is required")
@@ -79,7 +59,7 @@ export function validateCreateComment() {
 
         body("content")
             .trim()
-            .isLength({ MIN_COMMENT_LENGTH, max: MAX_COMMENT_LENGTH })
+            .isLength({ min: MIN_COMMENT_LENGTH, max: MAX_COMMENT_LENGTH })
             .withMessage(`Comment must be between ${MIN_COMMENT_LENGTH} and ${MAX_COMMENT_LENGTH} characters`)
     ];
 }

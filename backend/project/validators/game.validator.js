@@ -1,16 +1,16 @@
 import { body, param, query } from "express-validator";
-
+import { validatePagination } from "./shared.validator.js";
 import { MIN_ID } from "../config/constants.js";
 
 // Validates the gameId route parameter
-// Used in getGame and submitGameResult
+// Used in getGame, joinRoom and leaveRoom
 export function validateGameId() {
     return [
         param("id")
             .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("Game ID must be a valid integer")
-            .bail() // stop checking if the above fails
-            .toInt() // Convert to integer for all following checks
+            .bail()
+            .toInt()
     ];
 }
 
@@ -18,19 +18,8 @@ export function validateGameId() {
 // Validates query parameters for getting all games
 export function validateGetGames() {
     return [
-        query("page")
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
+        ...validatePagination(), // Shared pagination validators
 
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt(),
-
-        // any other filters specific to that resource
         query("status")
             .optional()
             .isIn(["room", "ongoing", "finished", "cancelled"])
@@ -51,11 +40,11 @@ export function validateGetGames() {
             .optional()
             .isIn(["createdAt", "startedAt", "finishedAt"])
             .withMessage("sort must be createdAt, startedAt or finishedAt"),
-        
+
         query("order")
             .optional()
             .isIn(["asc", "desc"])
-            .withMessage("order must be ascending or descending")
+            .withMessage("order must be asc or desc")
     ];
 }
 

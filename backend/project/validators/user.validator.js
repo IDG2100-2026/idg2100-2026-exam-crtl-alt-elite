@@ -1,4 +1,5 @@
 import { body, param, query } from "express-validator";
+import { validatePagination } from "./shared.validator.js";
 import { findUserById } from "../services/user.services.js";
 
 import {
@@ -14,7 +15,7 @@ import {
 export function validateUserId() {
     return [
         param("id")
-            .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER})
+            .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("User ID must be a valid integer")
             .bail() // Stop checking if the above fails
             .toInt() // Convert to integer for all following checks
@@ -29,21 +30,12 @@ export function validateUserId() {
 // The limit for the pagination can be changed
 export function validateGetUsers() {
     return [
-        query("page")
+        ...validatePagination(), // Shared pagination validators
+
+        query("search")
             .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt(),
-        // any other filters specific to that resource
-        query("status")
-            .optional()
-            .isIn(["waiting", "ongoing", "finished"])
-            .withMessage("status must be waiting, ongoing or finished")
+            .isString()
+            .withMessage("search must be a string")
     ];
 }
 
