@@ -11,6 +11,7 @@ import AboutDicePage from './pages/StaticPages/AboutDicePage';
 import TermsPage from './pages/StaticPages/TermsPage';
 import PrivacyPage from './pages/StaticPages/PrivacyPage';
 import NotFoundPage from './pages/StaticPages/NotFoundPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="howToPlay" element={<AboutDicePage />} />
             <Route path="terms" element={<TermsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="profile/:id" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

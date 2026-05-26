@@ -32,7 +32,7 @@ export default function NavBar() {
 
         {user ? (
           <>
-            <span className={Styles["nav-element"]}>Hi, {user.username}</span>
+            <Link to={`/profile/${user.userId}`} className={Styles["nav-element"]}>Hi, {user.username}</Link>
             <button className={Styles["nav-element"]} onClick={handleLogout}>Log out</button>
           </>
         ) : (
