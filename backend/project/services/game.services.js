@@ -24,7 +24,7 @@ export function calculateNewELO(playerElo, opponentElo, actualScore) {
 // A player "wins" pairings against those with fewer final points
 // A player "loses" pairings against those with more final points
 // A player "draws" pairings against those with equal final points
-export async function updateELORatings(players, gameId) {
+export async function updateELORatings(players, gameMongoId) {
     // Fetch all player documents
     const userDocs = await Promise.all(
         players.map(p => User.findOne({ userId: p.userId }))
@@ -78,7 +78,7 @@ export async function updateELORatings(players, gameId) {
             const newElo = Math.max(0, user.eloRating + delta); // ELO can't go below 0
 
             // Add game to recent games, keep only the latest entries
-            const recentGames = [gameId, ...user.recentGames].slice(0, RECENT_GAMES);
+            const recentGames = [gameMongoId, ...user.recentGames].slice(0, RECENT_GAMES);
 
             await User.updateOne(
                 {
