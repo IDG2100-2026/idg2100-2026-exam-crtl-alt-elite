@@ -8,7 +8,7 @@ import {
 
 // GET /api/comments?targetId=123&targetType=game
 // Public, returns all comments for a specific game or tournament
-export async function getComments(req, res) {
+export async function getComments(req, res, next) {
     try {
         // Pagination related
         const { targetId, targetType, page = PAGE, limit = LIMIT } = req.validData;
@@ -29,11 +29,11 @@ export async function getComments(req, res) {
         // but admins can
         const filter = commentServices.buildCommentFilter(targetId, targetType, req.user.role);
 
-        // using the filter to filter through the comments
+        // Using the filter to filter through the comments
         const comments = await Comment.find(filter)
-            .sort({ createdAt: -1 }) // newest first
-            .skip((page - 1) * limit) // skips over comments from the previous page
-            .limit(Number(limit)); // limits so it returns only 20 comments maximum per request
+            .sort({ createdAt: -1 }) // Newest first
+            .skip((page - 1) * limit) // Skips over comments from the previous page
+            .limit(Number(limit)); // Limits so it returns only 20 comments maximum per request
 
         const total = await Comment.countDocuments(filter);
 
@@ -43,10 +43,8 @@ export async function getComments(req, res) {
             totalPages: Math.ceil(total / limit),
             comments
         });
-
     } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Could not get comments", error: err.message });
+        next(err);
     }
 }
 
@@ -78,9 +76,9 @@ export async function getRecentComments(req, res, next) {
 
 // POST /api/comments
 // Registered users only, creates a new comment on a game or tournament
-export async function createComment(req, res) {
+export async function createComment(req, res, next) {
     try {
-        // request body contains
+        // Request body contains
         const { targetId, targetType, content } = req.validData;
 
         // Check that all required fields are present
@@ -96,7 +94,7 @@ export async function createComment(req, res) {
         }
 
         // userId comes from the auth middleware, not the request body
-        // Prevents users from posting comments as someone else 
+        // Prevents users from posting comments as someone else
         const comment = new Comment({
             userId: req.user.userId,
             targetId,
@@ -113,14 +111,13 @@ export async function createComment(req, res) {
             // Bad request
             return res.status(400).json({ msg: err.message });
         }
-        // Internal server error
-        res.status(500).json({ msg: "Failed to create comment", error: err.message });
+        next(err);
     }
 }
 
 // DELETE /api/comments/:id
 // Admin only, soft deletes a comment by setting isDeleted to true
-export async function deleteComment(req, res) {
+export async function deleteComment(req, res, next) {
     try {
         // Finding the comment by the _id
         const comment = await Comment.findById(req.validData.id);
@@ -142,8 +139,7 @@ export async function deleteComment(req, res) {
 
         res.json({ msg: "Comment deleted successfully" });
     } catch (err) {
-        // Internal server error
-        res.status(500).json({ msg: "Failed to delete comment", error: err.message });
+        next(err);
     }
 }
 
