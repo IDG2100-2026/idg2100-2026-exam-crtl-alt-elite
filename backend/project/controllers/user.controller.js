@@ -251,6 +251,28 @@ export async function banUser(req, res) {
     }
 }
 
+// PUT /api/users/:id/role
+// Admin only, promotes a user to admin
+export async function makeAdmin(req, res, next) {
+    try {
+        const user = await userServices.findUserById(req.validData.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: "User was not found" });
+        }
+
+        if (user.role === "admin") {
+            return res.status(400).json({ msg: "User is already an admin" });
+        }
+
+        await User.updateOne({ userId: user.userId }, { role: "admin" });
+
+        res.json({ msg: `User ${user.username} is now an admin` });
+    } catch (err) {
+        next(err);
+    }
+}
+
 export default {
     getAllUsers,
     getUser,
@@ -258,5 +280,6 @@ export default {
     loginUser,
     updateUser,
     uploadAvatar,
-    banUser
+    banUser,
+    makeAdmin
 };

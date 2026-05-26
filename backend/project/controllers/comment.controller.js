@@ -50,6 +50,32 @@ export async function getComments(req, res) {
     }
 }
 
+// GET /api/comments/recent
+// Admin only, returns the most recent comments across all games and tournaments
+// Used in the comment administration page
+export async function getRecentComments(req, res, next) {
+    try {
+        const { page = PAGE, limit = LIMIT } = req.validData;
+
+        // Admins can see soft-deleted comments too
+        const comments = await Comment.find({})
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(Number(limit));
+
+        const total = await Comment.countDocuments({});
+
+        res.json({
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / limit),
+            comments
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // POST /api/comments
 // Registered users only, creates a new comment on a game or tournament
 export async function createComment(req, res) {
@@ -123,6 +149,7 @@ export async function deleteComment(req, res) {
 
 export default {
     getComments,
+    getRecentComments,
     createComment,
     deleteComment
 };

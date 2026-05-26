@@ -152,7 +152,7 @@ export function validateCreateTournament() {
             .withMessage("eloMax must be a non-negative integer")
             .toInt(),
 
-        // Cross-field validation - eloMin and eloMax must be provided together
+        // Cross-field validation, eloMin and eloMax must be provided together
         // Uses req.body to access eloMax when validating eloMin
         body("eloMin").custom((eloMin, { req }) => {
             const eloMax = req.body.eloMax;
@@ -237,7 +237,7 @@ export function validateUpdateTournament() {
             .withMessage("eloMax must be a non-negative integer")
             .toInt(),
 
-        // Cross-field validation - eloMin and eloMax must be provided together
+        // Cross-field validation, eloMin and eloMax must be provided together
         // Uses req.body to access eloMax when validating eloMin
         body("eloMin").custom((eloMin, { req }) => {
             const eloMax = req.body.eloMax;

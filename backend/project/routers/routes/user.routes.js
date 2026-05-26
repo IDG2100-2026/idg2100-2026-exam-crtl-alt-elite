@@ -22,12 +22,19 @@ userRouter.put("/:id",
     userController.updateUser
 );
 // /api/users/:id/avatar
-userRouter.put("/:id/avatar", requireUser, uploadMiddleware.uploadAvatar.single("avatar"), userController.uploadAvatar);
+userRouter.put(
+    "/:id/avatar", 
+    requireUser, 
+    uploadMiddleware.uploadAvatar.single("avatar"), 
+    userController.uploadAvatar
+);
 
 /* Admin users */
 // /api/users
 userRouter.get("/", requireAdmin, userValidator.validateGetUsers(), validate, userController.getAllUsers);
 // /api/users/:id/ban
 userRouter.put("/:id/ban", requireAdmin, userValidator.validateUserId(), validate, userController.banUser);
+// /api/users/:id/role
+userRouter.put("/:id/role", requireAdmin, userValidator.validateUserId(), validate, userController.makeAdmin);
 
 export default userRouter;

@@ -44,6 +44,24 @@ export function validateGetComments() {
     ];
 }
 
+// GET /api/comments/recent
+// Validates pagination query parameters for getting recent comments
+export function validateGetRecentComments() {
+    return [
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("page must be a positive integer")
+            .toInt(),
+
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 100 })
+            .withMessage("limit must be between 1 and 100")
+            .toInt()
+    ];
+}
+
 // POST /api/comments
 // Validates the request body for creating a comment
 export function validateCreateComment() {
@@ -69,5 +87,6 @@ export function validateCreateComment() {
 export default {
     validateCommentId,
     validateGetComments,
+    validateGetRecentComments,
     validateCreateComment
 };
