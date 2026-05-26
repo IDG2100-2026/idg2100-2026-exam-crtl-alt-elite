@@ -51,6 +51,7 @@ export async function socketAuth(socket, next) {
         socket.user = user;
         next();
     } catch (err) {
+        console.error("Socket auth error:", err.message);
         next(new Error("Authentication failed"));
     }
 }
