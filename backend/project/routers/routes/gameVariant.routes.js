@@ -1,10 +1,17 @@
 import express from "express";
 import gameVariantController from "../../controllers/gameVariant.controller.js";
+import gameVariantValidator from "../../validators/gameVariant.validator.js";
+import validate from "../../middleware/validate.js";
 
 const gameVariantRouter = express.Router();
 
 /* Public */
-// GET /api/variants    Returns all 18 game variants
-gameVariantRouter.get("/", gameVariantController.getAllVariants);
+// GET /api/variants
+gameVariantRouter.get(
+    "/",
+    gameVariantValidator.validateGetVariants(),
+    validate,
+    gameVariantController.getAllVariants
+);
 
 export default gameVariantRouter;

@@ -23,6 +23,12 @@ export function initSocket(httpServer) {
     io.on("connection", (socket) => {
         console.log(`Socket connected: ${socket.id}, user: ${socket.user?.username || "anonymous"}`);
 
+        // Join personal room for direct notifications
+        // Used for tournament game ready notifications
+        if (socket.user?.userId) {
+            socket.join(`user:${socket.user.userId}`);
+        }
+
         registerGameHandlers(io, socket);
         registerCommentHandlers(io, socket);
 

@@ -48,6 +48,11 @@ app.use("/api", apiRouter);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 
+// 404 handler, catches any request that didn't match a route
+app.use((req, res) => {
+    res.status(404).json({ msg: `Route ${req.method} ${req.originalUrl} not found` });
+});
+
 app.use(errorHandler);
 
 // listening on a port 
