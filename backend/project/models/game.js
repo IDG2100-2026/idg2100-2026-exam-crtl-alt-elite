@@ -21,7 +21,14 @@ const gameSchema = new mongoose.Schema({
     players: {
         type: [playerSchema],
         validate: {
-            validator: (arr) => arr.length >= 2 && arr.length <= 5,
+            validator: function(arr) {
+                // Room games can have 1 player while waiting for others to join
+                // Ongoing and finished games must have between 2 and 5 players
+                if (this.status === "room") {
+                    return arr.length >= 1 && arr.length <= 5;
+                }
+                return arr.length >= 2 && arr.length <= 5;
+            },
             message: "A game must have between 2 and 5 players"
         }
     },

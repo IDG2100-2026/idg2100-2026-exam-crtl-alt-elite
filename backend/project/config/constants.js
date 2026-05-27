@@ -2,7 +2,7 @@
 export const MIN_USERNAME_LENGTH = 3; // characters
 export const MAX_USERNAME_LENGTH = 20; // characters
 export const MIN_PWD_LENGTH = 8; // characters
-export const MAX_PWD_LENGTH = 64; // characters
+export const MAX_PWD_LENGTH = 256; // characters
 export const MIN_AGE = 18; // years 
 export const DEFAULT_ELO = 1000; // default elo score, according to google
 export const DEFAULT_POINTS = 100; // default amount of points players receive
