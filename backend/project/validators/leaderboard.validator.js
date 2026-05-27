@@ -1,5 +1,5 @@
 import { query } from "express-validator";
-import { validatePagination } from "./shared.validator.js";
+import { validatePagination } from "./pagination.validator.js";
 
 // GET /api/leaderboard?sort=elo&page=1&limit=20&variantId=123
 export function validateGetLeaderboard() {

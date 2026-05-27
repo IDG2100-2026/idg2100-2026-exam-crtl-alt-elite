@@ -1,5 +1,5 @@
 import { body, param, query } from "express-validator";
-import { validatePagination } from "./shared.validator.js";
+import { validatePagination } from "./pagination.validator.js";
 import { MIN_ID } from "../config/constants.js";
 
 // Validates the gameId route parameter
