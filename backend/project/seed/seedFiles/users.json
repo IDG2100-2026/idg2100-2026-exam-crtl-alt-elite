@@ -6,7 +6,10 @@
     "age": 28,
     "role": "admin",
     "eloRating": 1200,
-    "eloRatingLastWeek": 1150
+    "eloRatingLastWeek": 1150,
+    "points": 500,
+    "emailVerified": true,
+    "aboutMe": "Platform administrator and avid poker dice player. Fair but firm."
   },
   {
     "username": "admin_bob",
@@ -15,7 +18,10 @@
     "age": 35,
     "role": "admin",
     "eloRating": 1180,
-    "eloRatingLastWeek": 1200
+    "eloRatingLastWeek": 1200,
+    "points": 500,
+    "emailVerified": true,
+    "aboutMe": "Co-administrator. Been playing dice games since I was a kid."
   },
   {
     "username": "carol_poker",
@@ -24,7 +30,10 @@
     "age": 31,
     "role": "user",
     "eloRating": 1120,
-    "eloRatingLastWeek": 1080
+    "eloRatingLastWeek": 1080,
+    "points": 350,
+    "emailVerified": true,
+    "aboutMe": "Poker face? More like poker dice face. Come at me."
   },
   {
     "username": "dave_rolls",
@@ -33,7 +42,10 @@
     "age": 22,
     "role": "user",
     "eloRating": 1000,
-    "eloRatingLastWeek": 1000
+    "eloRatingLastWeek": 1000,
+    "points": 200,
+    "emailVerified": true,
+    "aboutMe": "Just here to roll dice and have fun."
   },
   {
     "username": "eve_straights",
@@ -42,7 +54,10 @@
     "age": 19,
     "role": "user",
     "eloRating": 1100,
-    "eloRatingLastWeek": 1080
+    "eloRatingLastWeek": 1080,
+    "points": 450,
+    "emailVerified": true,
+    "aboutMe": "Straights are my specialty. Don't sleep on me."
   },
   {
     "username": "frank_bluff",
@@ -51,7 +66,10 @@
     "age": 26,
     "role": "user",
     "eloRating": 950,
-    "eloRatingLastWeek": 970
+    "eloRatingLastWeek": 970,
+    "points": 100,
+    "emailVerified": true,
+    "aboutMe": "The bluff master. You never know what I'm holding."
   },
   {
     "username": "grace_dice",
@@ -60,7 +78,10 @@
     "age": 24,
     "role": "user",
     "eloRating": 1050,
-    "eloRatingLastWeek": 1020
+    "eloRatingLastWeek": 1020,
+    "points": 300,
+    "emailVerified": true,
+    "aboutMe": "Dice games are life. Spanish Poker Dice is my favourite."
   },
   {
     "username": "henry_fives",
@@ -69,7 +90,9 @@
     "age": 30,
     "role": "user",
     "eloRating": 890,
-    "eloRatingLastWeek": 910
+    "eloRatingLastWeek": 910,
+    "points": 150,
+    "emailVerified": true
   },
   {
     "username": "isla_royal",
@@ -78,7 +101,10 @@
     "age": 21,
     "role": "user",
     "eloRating": 1300,
-    "eloRatingLastWeek": 1250
+    "eloRatingLastWeek": 1250,
+    "points": 600,
+    "emailVerified": true,
+    "aboutMe": "Top ranked player on the platform. I never bluff... or do I?"
   },
   {
     "username": "jack_sevens",
@@ -87,7 +113,9 @@
     "age": 33,
     "role": "user",
     "eloRating": 760,
-    "eloRatingLastWeek": 800
+    "eloRatingLastWeek": 800,
+    "points": 100,
+    "emailVerified": true
   },
   {
     "username": "karen_flush",
@@ -96,7 +124,10 @@
     "age": 27,
     "role": "user",
     "eloRating": 1010,
-    "eloRatingLastWeek": 990
+    "eloRatingLastWeek": 990,
+    "points": 250,
+    "emailVerified": true,
+    "aboutMe": "Always chasing that perfect flush. One day I'll get it."
   },
   {
     "username": "leo_wildcard",
@@ -105,7 +136,10 @@
     "age": 20,
     "role": "user",
     "eloRating": 1150,
-    "eloRatingLastWeek": 1100
+    "eloRatingLastWeek": 1100,
+    "points": 400,
+    "emailVerified": true,
+    "aboutMe": "Wildcard player. Expect the unexpected."
   },
   {
     "username": "mia_doubles",
@@ -114,7 +148,10 @@
     "age": 23,
     "role": "user",
     "eloRating": 1080,
-    "eloRatingLastWeek": 1060
+    "eloRatingLastWeek": 1060,
+    "points": 275,
+    "emailVerified": true,
+    "aboutMe": "Doubles are my bread and butter. Consistent and reliable."
   },
   {
     "username": "nick_fullhouse",
@@ -123,7 +160,10 @@
     "age": 29,
     "role": "user",
     "eloRating": 920,
-    "eloRatingLastWeek": 950
+    "eloRatingLastWeek": 950,
+    "points": 175,
+    "emailVerified": true,
+    "aboutMe": "Full house or bust. No in between."
   },
   {
     "username": "olivia_trips",
@@ -132,6 +172,9 @@
     "age": 25,
     "role": "user",
     "eloRating": 1230,
-    "eloRatingLastWeek": 1190
+    "eloRatingLastWeek": 1190,
+    "points": 550,
+    "emailVerified": true,
+    "aboutMe": "Three of a kind every time. It is not luck, it is skill."
   }
 ]

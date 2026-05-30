@@ -1,62 +1,74 @@
 import mongoose from "mongoose";
 import { Game } from "../models/game.js";
 
-// Aggregation pipeline for leaderboard stats
-// Using MongoDB aggregation instead of JavaScript filtering for better performance
-// Aggregation pipeline reference: https://www.mongodb.com/docs/manual/core/aggregation-pipeline/
-
 /**
  * Builds and runs an aggregation pipeline to calculate leaderboard stats
  * for all registered, non-banned users
  * Inspired by the one we made inclass, IDG2100 Fullstack 2026
  * 
+ * Sorting and pagination happen inside the MongoDB pipeline instead of in 
+ * JavaScript memory, which is more efficient for large datasets
+ * 
  * The pipeline:
- * a) Only looks at finished, non-anonymous games
+ * a) Only looks at finished games
  * b) Optionally filters by game variant
  * c) Groups stats per userId (wins, draws, total games)
  * d) Joins with the users collection to get full user info
  * e) Hides sensitive fields (pwd, _id)
  * f) Calculates win percentage and ELO change
+ * g) Sorts by the requested field inside the pipeline
+ * h) Paginates inside the pipeline
  * 
  * @param {string|null} variantId - Optional MongoDB ID to filter by game variant
- * @returns {Array} Array of leaderboard entries with user stats
+ * @param {string} sort - Field to sort by: elo, wins, winPercentage, totalGames
+ * @param {number} page - Page number for pagination
+ * @param {number} limit - Number of results per page
+ * @returns {Object} Object containing total count and paginated leaderboard entries
  */
-
-export async function getLeaderboardStats(variantId = null) {
+export async function getLeaderboardStats(variantId = null, sort = "elo", page = 1, limit = 20) {
     // Stage 1
-    // a) Only look at finished, non-anonymous games
-    // b) Optionally filter by variant
+    // Only look at finished games
+    // Optionally filter by variant
     const matchStage = {
         $match: {
             status: "finished",
-            isAnonymous: false,
             // If variantId is provided, filter by it
             ...(variantId && { variantId: new mongoose.Types.ObjectId(variantId) })
         }
     };
 
     // Stage 2
-    // Need one record per player per game 
-    // b) One record per player per game
-    // c) Groups stats per userId (wins, draws, total games)
+    // One record per player per game
     const projectStage = {
         $project: {
-            players: [
-                {
-                    userId: "$playerOne.userId",
-                    // 1 if playerOne won, 0.5 if draw, 0 if loss
-                    won: { $cond: [{ $eq: ["$winnerId", "$playerOne.userId"] }, 1, 0] },
-                    draw: { $cond: [{ $eq: ["$winnerId", null] }, 1, 0] }
-                },
-                {
-                    userId: "$playerTwo.userId",
-                    won: { $cond: [{ $eq: ["$winnerId", "$playerTwo.userId"] }, 1, 0] },
-                    draw: { $cond: [{ $eq: ["$winnerId", null] }, 1, 0] }
+            players: {
+                $map: {
+                    input: "$players",
+                    as: "player",
+                    in: {
+                        userId: "$$player.userId",
+                        finalPoints: "$$player.finalPoints",
+                        // Winner is the player with the most final points
+                        won: {
+                            $cond: [
+                                { $eq: ["$$player.userId", { $arrayElemAt: ["$winnerId", 0] }] },
+                                1,
+                                0
+                            ]
+                        },
+                        draw: {
+                            $cond: [
+                                { $gt: [{ $size: "$winnerId" }, 1] },
+                                1,
+                                0
+                            ]
+                        }
+                    }
                 }
-            ]
+            }
         }
     };
-    
+
     // Stage 3
     // Flatten the players array so each player gets their own document
     // Reference: https://www.mongodb.com/docs/manual/reference/operator/aggregation/unwind/
@@ -64,10 +76,10 @@ export async function getLeaderboardStats(variantId = null) {
         $unwind: { path: "$players" }
     };
 
-    // Stage 4 
-    // Filter out null userIds, AKA anonymous players
+    // Stage 4
+    // Filter out null userIds
     const filterNullStage = {
-        $match: { "players.userId": { $ne: null} }
+        $match: { "players.userId": { $ne: null } }
     };
 
     // Stage 5
@@ -83,30 +95,29 @@ export async function getLeaderboardStats(variantId = null) {
     };
 
     // Stage 6
-    // f) Calculates win percentage and losses
-    const addFieldStage= {
+    // Calculate win percentage and losses
+    const addFieldStage = {
         $addFields: {
             losses: { $subtract: ["$totalGames", { $add: ["$wins", "$draws"] }] },
-            // Round to nearest integer
             winPercentage: {
                 $cond: [
-                    { $gt: ["$totalGames", 0] }, // is totalGames greater than 0
-                    { $round: [{ $multiply: [{ $divide: ["$wins", "$totalGames"] }, 100] }, 0] }, // Calculate win percentage
-                    0 // Return 0 if the player has no games
+                    { $gt: ["$totalGames", 0] },
+                    { $round: [{ $multiply: [{ $divide: ["$wins", "$totalGames"] }, 100] }, 0] },
+                    0
                 ]
             }
         }
     };
 
-    // Stage 7 
-    // d) Joins with the users collection to get full user info
+    // Stage 7
+    // Join with the users collection to get full user info
     // Reference: https://www.mongodb.com/docs/manual/reference/operator/aggregation/lookup/
     const lookupStage = {
         $lookup: {
             from: "users",
-            localField: "_id", // userId from the grouped stats
-            foreignField: "userId", // Matches userId in the users collection
-            as: "user" // result stored in the "user" array
+            localField: "_id",
+            foreignField: "userId",
+            as: "user"
         }
     };
 
@@ -125,17 +136,15 @@ export async function getLeaderboardStats(variantId = null) {
         }
     };
 
-    // Stage 10 
+    // Stage 10
     // Reshape the final output
-    // e) Hides sensitive fields (pwd, _id)
-    // f) Adds ELO change this week
+    // Hides sensitive fields and adds ELO change this week
     const finalProjectStage = {
         $project: {
-            _id: 0, // exclude MongoDB's _id
+            _id: 0,
             userId: "$_id",
             username: "$user.username",
             eloRating: "$user.eloRating",
-            // Calculate ELO change this week from the user's stored values
             eloChangeThisWeek: { $subtract: ["$user.eloRating", "$user.eloRatingLastWeek"] },
             totalGames: 1,
             wins: 1,
@@ -145,7 +154,35 @@ export async function getLeaderboardStats(variantId = null) {
         }
     };
 
-    return await Game.aggregate([
+    // Stage 11
+    // Sort inside the pipeline
+    const sortField = {
+        "elo": "eloRating",
+        "wins": "wins",
+        "winPercentage": "winPercentage",
+        "totalGames": "totalGames"
+    }[sort] || "eloRating";
+
+    const sortStage = {
+        $sort: { [sortField]: -1 } // Descending, highest first
+    };
+
+    // Stage 12
+    // Count total before pagination
+    // Uses $facet to run two pipelines in parallel:
+    // one for the total count and one for the paginated results
+    // Reference: https://www.mongodb.com/docs/manual/reference/operator/aggregation/facet/
+    const facetStage = {
+        $facet: {
+            total: [{ $count: "count" }],
+            data: [
+                { $skip: (page - 1) * limit },
+                { $limit: limit }
+            ]
+        }
+    };
+
+    const results = await Game.aggregate([
         matchStage,
         projectStage,
         unwindStage,
@@ -155,10 +192,23 @@ export async function getLeaderboardStats(variantId = null) {
         lookupStage,
         unwindUserStage,
         filterUsersStage,
-        finalProjectStage
+        finalProjectStage,
+        sortStage,
+        facetStage
     ]);
+
+    // $facet always returns one document with total and data arrays
+    const total = results[0]?.total[0]?.count || 0;
+    const data = results[0]?.data || [];
+
+    return {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        leaderboard: data
+    };
 }
 
-export default { 
+export default {
     getLeaderboardStats
 };

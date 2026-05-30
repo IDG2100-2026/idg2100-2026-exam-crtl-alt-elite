@@ -8,6 +8,7 @@ import {
     MAX_PWD_LENGTH,
     MIN_AGE,
     DEFAULT_ELO,
+    DEFAULT_POINTS,
     MIN_ID,
     RECENT_GAMES,
     MAX_LENGTH_ABOUT_ME
@@ -34,13 +35,15 @@ const userSchema = new mongoose.Schema({
         maxLength: [MAX_USERNAME_LENGTH, `Username can't be loger than ${MAX_USERNAME_LENGTH} characters`]
     },
 
-    // What the user's password must consist of
+    // Stored as "salt:hash" using scrypt, never plain text
+    // select: false means it won't be returned in queries unless explicitly requested
     pwd: {
         type: String,
         required: true,
         trim: true,
         minLength: [MIN_PWD_LENGTH, `Password has to be at least ${MIN_PWD_LENGTH} characters long`],
-        maxLength: [MAX_PWD_LENGTH, `I don't think you need a password that's longer than ${MAX_PWD_LENGTH} characters, Oh the boov`]
+        maxLength: [MAX_PWD_LENGTH, `I don't think you need a password that's longer than ${MAX_PWD_LENGTH} characters, Oh the boov`],
+        select: false
     },
 
     // User's email
@@ -49,8 +52,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         lowercase: true,
-        // match and validate taken from inclass code, IDG2100 Fullstack 2026
-        match: [/^.+@[a-z]+\.[a-z]+$/, "{VALUE} isn't an email"],
+        // validate taken from inclass code, IDG2100 Fullstack 2026
         validate: {
             validator: async function(email) {
                 const existing = await this.constructor.findOne({ email });
@@ -64,7 +66,7 @@ const userSchema = new mongoose.Schema({
     age: {
         type: Number,
         required: true,
-        min: MIN_AGE
+        min: [MIN_AGE, `You must be at least ${MIN_AGE} years old to register`]
     },
 
     // what kind of user and what that type of user is allowed to do
@@ -102,6 +104,14 @@ const userSchema = new mongoose.Schema({
         default: DEFAULT_ELO
     },
 
+    // Used for buy.ins and betting in games and tournaments
+    // Players receive 100 points per week
+    points: {
+        type: Number,
+        default: DEFAULT_POINTS,
+        min: [0, "Points can't be negative"]
+    },
+
     // References the user's top recent games 
     recentGames: {
         type: [{
@@ -127,6 +137,37 @@ const userSchema = new mongoose.Schema({
         }
     }],
 
+    // Stores the current valid refresh token
+    // Replaced on every token refresh, invalidated on logout
+    // select: false so it's never accidentally returned in responses
+    refreshToken: {
+        type: String,
+        default: null,
+        select: false
+    },
+
+    // Whether the user has veified their email
+    // Users cannot play games until this is true
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+
+    // Token sent to the user's email for verification
+    // Cleared after successful verification
+    emailVerificationToken: {
+        type: String,
+        default: null,
+        select: false
+    },
+
+    // When the verification token expires (15 min after being issued in this case)
+    emailVerificationExpiry: {
+        type: Date,
+        default: null,
+        select: false
+    },
+
     // Is user banned? at default: no.
     isBanned: {
         type: Boolean,
@@ -137,11 +178,14 @@ const userSchema = new mongoose.Schema({
     // Saves the timestamp for document creation, aka user creation
     timestamps: true,
 
-    // code block copied from inclass code, IDG2100 Fullstack 2026
+    // code block copied and modified from inclass code, IDG2100 Fullstack 2026
     toJSON: {
         transform: (userDoc, userPojo) => {
             delete userPojo._id;
             delete userPojo.pwd;
+            delete userPojo.refreshToken;
+            delete userPojo.emailVerificationToken;
+            delete userPojo.emailVerificationExpiry;
             return userPojo;
         },
         versionKey: false
