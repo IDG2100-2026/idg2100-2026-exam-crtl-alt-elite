@@ -1,6 +1,7 @@
 /* this is basically the same code as the inclass code we've been doing from IDG2100 Fullstack 2026*/
 import dotenv from "dotenv";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import cors from "cors";
@@ -23,12 +24,17 @@ const app = express();
 
 // Allow requests from the frontend dev server
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "x-user-id"]
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true // Required for cookies to be sent cross-origin
 }));
 
 app.use(express.json());
+
+// Parse cookies from incoming requests
+// Required for reading the refresh token cookie
+app.use(cookieParser());
 
 // Apply rate limiter to all API routes
 app.use("/api", apiLimiter);
@@ -41,6 +47,11 @@ app.use("/api", apiRouter);
 // Absolute path
 const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use("/uploads", express.static(join(__dirname, "uploads")));
+
+// 404 handler, catches any request that didn't match a route
+app.use((req, res) => {
+    res.status(404).json({ msg: `Route ${req.method} ${req.originalUrl} not found` });
+});
 
 app.use(errorHandler);
 

@@ -1,10 +1,9 @@
 import { body, param, query } from "express-validator";
+import { validatePagination } from "./pagination.validator.js";
 import { findUserById } from "../services/user.services.js";
 
 import {
     MIN_ID,
-    MIN_USERNAME_LENGTH,
-    MAX_USERNAME_LENGTH,
     MIN_PWD_LENGTH,
     MAX_PWD_LENGTH,
     MIN_AGE,
@@ -16,7 +15,7 @@ import {
 export function validateUserId() {
     return [
         param("id")
-            .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER})
+            .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("User ID must be a valid integer")
             .bail() // Stop checking if the above fails
             .toInt() // Convert to integer for all following checks
@@ -31,65 +30,12 @@ export function validateUserId() {
 // The limit for the pagination can be changed
 export function validateGetUsers() {
     return [
-        query("page")
+        ...validatePagination(), // Shared pagination validators
+
+        query("search")
             .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt(),
-        // any other filters specific to that resource
-        query("status")
-            .optional()
-            .isIn(["waiting", "ongoing", "finished"])
-            .withMessage("status must be waiting, ongoing or finished")
-    ];
-}
-
-// POST /api/users/register
-// Validates the request body for user registration
-export function validateRegisterUser() {
-    return [
-        body("username")
-            .trim()
-            .escape() // Replaces XSS-related characters with HTML equivalents
-            .isLength({ min: MIN_USERNAME_LENGTH, max: MAX_USERNAME_LENGTH})
-            .withMessage(`Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters`)
-            .matches(/^[a-zA-Z0-9_]+$/)
-            .withMessage("Username can only contain letters, numbers and underscores"),
-
-        body("email")
-            .trim()
-            .normalizeEmail() // Lowercases and normalizes the email
-            .isEmail()
-            .withMessage("You need to have a valid email"),
-
-        body("pwd")
-            .isLength({ min: MIN_PWD_LENGTH, max: MAX_PWD_LENGTH})
-            .withMessage(`Password must be between ${MIN_PWD_LENGTH} and ${MAX_PWD_LENGTH} characters`),
-
-        body("age")
-            .isInt({ min: MIN_AGE })
-            .withMessage(`You must be at least ${MIN_AGE} years old to register`)
-            .toInt()
-    ];
-}
-
-// POST /api/users/login
-// Validates the request body for updating a user profile
-export function validateLoginUser() {
-    return [
-        body("emailOrUsername")
-            .trim()
-            .notEmpty()
-            .withMessage("Email or username is required"),
-        
-        body("pwd")
-            .notEmpty()
-            .withMessage("You actually have to have a password")
+            .isString()
+            .withMessage("search must be a string")
     ];
 }
 
@@ -127,7 +73,5 @@ export function validateUpdateUser() {
 export default {
     validateUserId,
     validateGetUsers,
-    validateRegisterUser,
-    validateLoginUser,
     validateUpdateUser
 };

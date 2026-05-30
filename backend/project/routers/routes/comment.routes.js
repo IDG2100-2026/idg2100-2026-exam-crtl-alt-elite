@@ -17,7 +17,11 @@ commentRouter.get("/", commentValidator.validateGetComments(), validate, comment
 commentRouter.post("/", requireUser, commentValidator.validateCreateComment(), validate, commentController.createComment);
 
 /* Admin only */
-// DELETE /api/comments/:id    Soft deletes by setting isDeleted to true
+// GET /api/comments/recent
+commentRouter.get("/recent", requireAdmin, commentValidator.validateGetRecentComments(), validate, commentController.getRecentComments);
+
+// DELETE /api/comments/:id
+// Soft deleted so admins can still see. isDeleted set to true.
 commentRouter.delete("/:id", requireAdmin, commentValidator.validateCommentId(), validate, commentController.deleteComment);
 
 export default commentRouter;
