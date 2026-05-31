@@ -79,10 +79,10 @@ const buildQuery = (params = {}) => {
 
 export const userApi = {
     register: (userData) =>
-        apiPost("/users/register", userData),
+        apiPost("/register", userData),
 
     login: (credentials) =>
-        apiPost("/users/login", credentials),
+        apiPost("/login", credentials),
 
     getById: (userId, requesterId) =>
         apiGet(`/users/${userId}`, requesterId),
@@ -123,8 +123,8 @@ export const gameApi = {
     getById: (gameId) =>
         apiGet(`/games/${gameId}`),
 
-    matchmake: (body, userId) =>
-        apiPost("/games/matchmake", body, userId),
+    createRoom: (body, userId) =>
+        apiPost("/games", body, userId),
 
     invite: (body, userId) =>
         apiPost("/games/invite", body, userId),
