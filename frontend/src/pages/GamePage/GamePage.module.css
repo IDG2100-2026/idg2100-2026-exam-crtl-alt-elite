@@ -1,0 +1,245 @@
+/* src/pages/GamePage.module.css */
+
+.page {
+  padding: 1.5rem 1.5rem 0;
+}
+
+.gameHeader {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gameHeader h1 {
+  font-size: 1.75rem;
+}
+
+.vs {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  margin: 0 0.5rem;
+}
+
+.variant {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+
+.waiting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.ongoing {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.finished {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Board */
+.players {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.playerCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-weight: 700;
+}
+
+.playerElo {
+  font-size: 0.8rem;
+  color: var(--color-accent-2);
+}
+
+.vsSmall {
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+}
+
+.board {
+  width: 100%;
+  min-height: 620px;
+  border-radius: 16px;
+  border: 3px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 0 40px rgba(0,0,0,0.3);
+  background: #1e3d2f;
+}
+
+.waitingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+}
+
+.waitingBox {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  max-width: 300px;
+}
+
+.spinner {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pollNote {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+}
+
+.placeholderMsg {
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 1rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebarTitle {
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.commentList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.comment {
+  background: var(--color-surface-2);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: left;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.comment p {
+  margin: 0.25rem 0 0;
+}
+
+.commentMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.noComments {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: 'Lato', sans-serif;
+  resize: vertical;
+}
+
+.commentInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.loginPrompt {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.monitorSection {
+  border-top: 2px solid var(--color-border);
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+}

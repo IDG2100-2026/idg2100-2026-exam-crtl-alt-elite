@@ -1,0 +1,104 @@
+.card {
+    background: #f5f0e4;
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    position: relative;
+    min-height: 220px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Playing card corner decorations */
+.card::before {
+    content: "A";
+    position: absolute;
+    top: 0.6rem;
+    left: 0.8rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #5c1a1a;
+    font-family: Georgia, serif;
+}
+
+.card::after {
+    content: "A";
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.8rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #5c1a1a;
+    font-family: Georgia, serif;
+    transform: rotate(180deg);
+}
+
+.status {
+    display: none;
+}
+
+.players {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2a1a1a;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.vs {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #2a1a1a;
+}
+
+.variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #4a3a3a;
+    text-align: center;
+    gap: 0.2rem;
+}
+
+.variant span {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.elo {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a3a3a;
+    letter-spacing: 0.03em;
+    margin-top: auto;
+}
+
+.joinBtn {
+    background: #5c1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    width: 100%;
+    margin-top: auto;
+    transition: background 0.15s ease;
+}
+
+.joinBtn:hover {
+    background: #7a2020;
+}
+
+.joinBtn:active {
+    transform: scale(0.97);
+}
