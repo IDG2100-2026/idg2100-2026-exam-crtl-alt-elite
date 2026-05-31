@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
+import { authApi } from "../../api/api.js";
 import styles from "./Register.module.css";
 
 export default function Register() {
     const navigate = useNavigate();
-    const { login } = useAuth();
 
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -26,31 +25,21 @@ export default function Register() {
         setError(null);
 
         try {
-            const res = await fetch("http://localhost:9000/api/users/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: username.trim(),
-                    email: email.trim(),
-                    pwd,
-                    age: Number(age)
-                })
+            await authApi.register({
+                username: username.trim(),
+                email: email.trim(),
+                pwd,
+                age: Number(age)
             });
 
-            const data = await res.json();
+            // Registration successful - user needs to verify email before logging in
+            // Redirect to login page with a message
+            navigate("/login", { 
+                state: { message: "Registration successful! Please check your email to verify your account before logging in." }
+            });
 
-            if (!res.ok) {
-                setError(data.msg || "Registration failed.");
-                setSubmitting(false);
-                return;
-            }
-
-            // Log the user in right after registering
-            login(data.userId, data.username);
-            navigate("/");
-
-        } catch {
-            setError("Could not connect to the server. Is the backend running?");
+        } catch (err) {
+            setError(err.message || "Registration failed.");
             setSubmitting(false);
         }
     }

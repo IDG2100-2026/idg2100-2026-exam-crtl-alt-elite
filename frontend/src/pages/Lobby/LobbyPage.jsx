@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../../hooks/useAuth.js";
 import GameCard from "@/components/GameCard/GameCard";
 import styles from "./LobbyPage.module.css";
 
@@ -20,7 +20,7 @@ export default function LobbyPage() {
                 setLoading(true);
                 setError(null);
 
-                const params = new URLSearchParams({ status: "waiting", limit: 20 });
+                const params = new URLSearchParams({ status: "room", limit: 20 });
                 if (filterRounds) params.append("rounds", filterRounds);
                 if (filterTime) params.append("timeControl", filterTime);
 

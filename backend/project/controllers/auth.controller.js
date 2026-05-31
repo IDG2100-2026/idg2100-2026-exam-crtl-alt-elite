@@ -103,30 +103,32 @@ export async function login(req, res, next) {
 }
 
 // POST /api/auth/refresh
-// Public, issues a new access token using the refresh token cookie
 export async function refresh(req, res, next) {
     try {
-        // Refresh token comes from the httpOnly cookie
         const incomingRefreshToken = req.cookies?.refreshToken;
 
         if (!incomingRefreshToken) {
-            // Unauthorized
             return res.status(401).json({ msg: "No refresh token provided" });
         }
 
-        // Rotate the refresh token and issue a new token pair
         const tokens = await authServices.rotateRefreshToken(incomingRefreshToken, req.ip);
 
         if (!tokens) {
-            // Token was invalid, expired, or reuse was detected; clear the cookie
             res.clearCookie("refreshToken");
             return res.status(401).json({ msg: "Invalid or expired refresh token" });
         }
 
-        // Set the new refresh token cookie
         res.cookie("refreshToken", tokens.refreshToken, _refreshTokenCookieOptions);
 
-        res.json({ accessToken: tokens.accessToken });
+        // Also return user info so the frontend can restore user state
+        const user = await User.findOne({ userId: tokens.userId });
+
+        res.json({
+            accessToken: tokens.accessToken,
+            userId: user.userId,
+            username: user.username,
+            role: user.role
+        });
     } catch (err) {
         next(err);
     }
