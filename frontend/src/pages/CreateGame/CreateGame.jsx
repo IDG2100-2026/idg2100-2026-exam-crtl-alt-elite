@@ -18,6 +18,7 @@ export default function CreateGame() {
     const [selectedRounds, setSelectedRounds] = useState(null);
     const [selectedStraights, setSelectedStraights] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
+    
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -62,7 +63,7 @@ export default function CreateGame() {
         setLoading(true);
 
         try {
-            const result = await gameApi.matchmake(
+            const result = await gameApi.createRoom(
                 { variantId: selectedVariant._id },
                 user?.userId ?? null
             );
