@@ -12,6 +12,8 @@ import TermsPage from './pages/StaticPages/TermsPage';
 import PrivacyPage from './pages/StaticPages/PrivacyPage';
 import NotFoundPage from './pages/StaticPages/NotFoundPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import LobbyPage from './pages/Lobby/LobbyPage';
+import GamePage from './pages/GamePage/GamePage';
 
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
             <Route path="terms" element={<TermsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="profile/:id" element={<ProfilePage />} />
+            <Route path="lobby" element={<LobbyPage />} />
+            <Route path="games/:id" element={<GamePage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
