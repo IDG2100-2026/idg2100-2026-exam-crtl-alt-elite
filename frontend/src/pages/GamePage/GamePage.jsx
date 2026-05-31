@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from "../../hooks/useAuth.js";
 import GameBoard from '@/components/Dice/GameBoard';
 import '@/components/Dice/dice-poker-monitor.js';
 import styles from './GamePage.module.css';

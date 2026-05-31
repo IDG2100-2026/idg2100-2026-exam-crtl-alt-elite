@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from "../../hooks/useAuth.js";
 import styles from '../Profile/ProfilePage.module.css';
 
 export default function ProfilePage() {

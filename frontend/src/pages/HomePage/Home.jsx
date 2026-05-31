@@ -19,7 +19,7 @@ export default function Home() {
                 setLoading(true);
                 setError(null);
 
-                const lobbyRes = await fetch("http://localhost:9000/api/games?status=waiting&limit=5");
+                const lobbyRes = await fetch("http://localhost:9000/api/games?status=room&limit=5");
                 const lobbyData = await lobbyRes.json();
                 setLobbyGames(lobbyData.games ?? []);
 
