@@ -1,0 +1,52 @@
+.page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.card {
+    background: var(--color-surface);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.success {
+    color: green;
+}
+
+.error {
+    color: red;
+}
+
+.message {
+    color: var(--color-text-muted);
+}
+
+.resend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.switchLink {
+    text-align: center;
+    margin-top: 1rem;
+}

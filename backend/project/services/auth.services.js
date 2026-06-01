@@ -28,6 +28,8 @@ export async function verifyEmail(token) {
         emailVerified: false
     }).select("+emailVerificationToken +emailVerificationExpiry"); // Added in so it doesn't return as undefined
 
+    console.log("Verification attempt:", { token, userFound: !!user });
+
     if (!user) {
         return { success: false, msg: "Invalid verification token" };
     }
@@ -86,7 +88,11 @@ export async function rotateRefreshToken(incomingRefreshToken, ip) {
     }
 
     // Issue a new token pair
-    return await issueTokens(user, ip);
+    const tokens = await issueTokens(user, ip);
+
+    // Return userId alongside tokens so the refresh endpoint can fetch user info
+    // Used by the frontend to restore user state on page reload
+    return { ...tokens, userId: user.userId };
 }
 
 // Clears the refresh token on logout

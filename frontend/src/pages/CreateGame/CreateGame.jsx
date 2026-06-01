@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useFetch } from "../../hooks/useFetch.js";
 import { gameApi, variantApi } from "../../api/api.js";
-import { useAuth } from "../../hooks/useAuth.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 import styles from "./CreateGame.module.css";
 import { useCallback } from "react";
 

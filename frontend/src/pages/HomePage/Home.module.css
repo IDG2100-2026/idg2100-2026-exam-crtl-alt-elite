@@ -5,6 +5,7 @@
     flex-direction: column;
 }
 
+/* Hero */
 .hero {
     position: relative;
     min-height: 80vh;
@@ -41,6 +42,7 @@
     font-size: var(--font-size-title);
     font-style: italic;
     margin: 0;
+    color: white;
 }
 
 .heroSubtitle {
@@ -50,7 +52,14 @@
     opacity: 0.9;
 }
 
-/* button */
+.heroActions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Buttons */
 .btnCreate {
     font-size: 1.2rem;
     padding: 0.8rem 1.6rem;
@@ -62,27 +71,74 @@
     transition: all 0.2s ease;
 }
 
-.btnCreate:hover {
-    background: linear-gradient(#ccac3b, #a76303);
+.btnCreate:hover { background: linear-gradient(#ccac3b, #a76303); }
+.btnCreate:active { transform: scale(0.97); }
+
+.btnLogin {
+    font-size: 1rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
 }
 
-.btnCreate:active {
-    transform: scale(0.97);
+.btnBrowse {
+    font-size: 1rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
-
-/* section */
+/* Sections */
 .lobbySection,
 .topGamesSection {
     padding: 4rem 1.5rem;
     background: var(--color-secondary);
-    text-align: center;
 }
 
-.lobbySection h2,
-.topGamesSection h2 {
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1100px;
+    margin: 0 auto 0.5rem;
+}
+
+.sectionHeader h2 {
     font-size: 2rem;
-    margin-bottom: 1rem;
+    color: white;
+    margin: 0;
 }
 
+.sectionSubtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.95rem;
+    max-width: 1100px;
+    margin: 0 auto 1.5rem;
+    text-align: left;
+}
 
+.seeAll {
+    font-size: 0.9rem;
+    color: white;
+    opacity: 0.75;
+    text-decoration: underline;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.emptyMsg {
+    color: rgba(255,255,255,0.7);
+    max-width: 1100px;
+    margin: 0 auto;
+}

@@ -1,5 +1,4 @@
-// Base structure copied from inclass code IDG2100 Fullstack 2026 
-// Based on code from Nora Storro (Fullstack assignment 3)
+// Base structure copied from inclass code IDG2100 Fullstack 2026
 const {
     VITE_API_HOSTNAME,
     VITE_API_PORT,
@@ -8,22 +7,34 @@ const {
 
 const API_URL = `${VITE_API_PROTOCOL}://${VITE_API_HOSTNAME}:${VITE_API_PORT}/api`;
 
-/** 
+// Stores the current access token in memory
+// Not in localStorage since that's vulnerable to XSS
+// The refresh token lives in an httpOnly cookie handled by the browser
+let accessToken = null;
+
+// Setter and getter for access token
+// Used by auth flows to update the token after login or refresh
+export function setAccessToken(token) {
+    accessToken = token;
+}
+
+export function getAccessToken() {
+    return accessToken;
+}
+
+/**
  * Core fetch wrapper
- * Handles common headers, JSON parsing and error responses
- * 
+ * Handles common headers, JSON parsing, error responses
+ * and automatic token refresh on 401
+ *
  * @param {string} endpoint - API endpoint, e.g. "/users"
  * @param {object} options - fetch options (method, body, etc.)
- * @param {number|null} userId - userId for x-user-id header, null for anonymous
+ * @param {boolean} retry - whether this is a retry after token refresh
  * @returns {Promise<any>} parsed JSON response
  */
-// if you have apiGet instead <-- you'd specify {method: "GET"} in the options by default
-export async function apiFetch(endpoint, options = {}, userId = null) {
-    // endpoint could be something like /
-
-    // Take whatever headers is passed in and alwais include the content type
+export async function apiFetch(endpoint, options = {}, retry = false) {
     const headers = {
-        ...(options?.headers || {}), 
+        ...(options?.headers || {})
     };
 
     // Only set Content-Type for non-FormData requests
@@ -32,69 +43,130 @@ export async function apiFetch(endpoint, options = {}, userId = null) {
         headers["Content-Type"] = "application/json";
     }
 
-    // Add auth header if userId is provided
-    // This is how our rudimentary auth works (see auth middleware in backend)
-    if (userId != null) {
-        headers["x-user-id"] = userId;
+    // Add access token to Authorization header if available
+    if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
     }
 
-    // Sends the HTTP request to the backend
     const resp = await fetch(API_URL + endpoint, {
         ...options,
-        headers
+        headers,
+        // credentials: "include" is required for httpOnly cookies
+        // to be sent cross-origin (refresh token cookie)
+        credentials: "include"
     });
 
-    // The response/result from the backend request
+    // If 401 and we haven't retried yet, try to refresh the token
+    // This handles expired access tokens transparently
+    if (resp.status === 401 && !retry) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+            // Retry the original request with the new access token
+            return apiFetch(endpoint, options, true);
+        }
+        // Refresh failed - clear token and throw
+        accessToken = null;
+        throw new Error("Session expired, please log in again");
+    }
+
     const result = await resp.json().catch(() => null);
 
-    if(!resp.ok) {
-        throw new Error(result?.msg || "An error occured while fetching data");
+    if (!resp.ok) {
+        throw new Error(result?.msg || "An error occurred while fetching data");
     }
 
     return result;
 }
 
+// Attempts to refresh the access token using the refresh token cookie
+// Returns true if successful, false if not
+async function tryRefreshToken() {
+    try {
+        const resp = await fetch(`${API_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include" // Sends the refresh token cookie
+        });
+
+        if (!resp.ok) return false;
+
+        const data = await resp.json();
+        accessToken = data.accessToken;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 // Convenience wrappers for common HTTP methods
-const apiGet = (endpoint, userId = null) => 
-    apiFetch(endpoint, { method: "GET" }, userId);
+const apiGet = (endpoint) =>
+    apiFetch(endpoint, { method: "GET" });
 
-const apiPost = (endpoint, body, userId = null) => 
-    apiFetch(endpoint, { method: "POST", body: JSON.stringify(body)}, userId);
+const apiPost = (endpoint, body) =>
+    apiFetch(endpoint, { method: "POST", body: JSON.stringify(body) });
 
-const apiPut = (endpoint, body, userId = null) =>
-    apiFetch(endpoint, { method: "PUT", body: JSON.stringify(body) }, userId);
+const apiPut = (endpoint, body) =>
+    apiFetch(endpoint, { method: "PUT", body: JSON.stringify(body) });
 
-const apiDelete = (endpoint, userId = null) =>
-    apiFetch(endpoint, { method: "DELETE" }, userId);
+const apiDelete = (endpoint) =>
+    apiFetch(endpoint, { method: "DELETE" });
 
 // Helper to build query strings from a params object
-// e.g. { page: 1, limit: 10 } -> "?page?1&limit=10"
+// e.g. { page: 1, limit: 10 } -> "?page=1&limit=10"
 const buildQuery = (params = {}) => {
-    const query = new URLSearchParams(params).toString();
+    const filtered = Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
+    );
+    const query = new URLSearchParams(filtered).toString();
     return query ? `?${query}` : "";
+};
+
+
+// AUTH ENDPOINTS
+
+export const authApi = {
+    register: (userData) =>
+        apiPost("/auth/register", userData),
+
+    login: async (credentials) => {
+        const data = await apiPost("/auth/login", credentials);
+        // Store the access token in memory after login
+        if (data.accessToken) {
+            accessToken = data.accessToken;
+        }
+        return data;
+    },
+
+    logout: () =>
+        apiPost("/auth/logout", {}),
+
+    refresh: () =>
+        apiPost("/auth/refresh", {}),
+
+    verifyEmail: (token) =>
+        apiGet(`/auth/email-verification?token=${token}`),
+
+    resendVerification: (email) =>
+        apiPost("/auth/email-verification", { email })
 };
 
 
 // USER ENDPOINTS
 
 export const userApi = {
-    register: (userData) =>
-        apiPost("/register", userData),
+    getById: (userId) =>
+        apiGet(`/users/${userId}`),
 
-    login: (credentials) =>
-        apiPost("/login", credentials),
-
-    getById: (userId, requesterId) =>
-        apiGet(`/users/${userId}`, requesterId),
-
-    getAll: (adminId, params = {}) =>
-        apiGet(`/users${buildQuery(params)}`, adminId),
+    getAll: (params = {}) =>
+        apiGet(`/users${buildQuery(params)}`),
 
     update: (userId, data) =>
-        apiPut(`/users/${userId}`, data, userId),
+        apiPut(`/users/${userId}`, data),
 
-    ban: (targetId, adminId) =>
-        apiPut(`/users/${targetId}/ban`, {}, adminId),
+    ban: (targetId) =>
+        apiPut(`/users/${targetId}/ban`, {}),
+
+    makeAdmin: (targetId) =>
+        apiPut(`/users/${targetId}/role`, {}),
 
     // Avatar upload uses FormData not JSON so we call apiFetch directly
     // This skips the Content-Type: application/json header since multer needs multipart/form-data
@@ -102,7 +174,7 @@ export const userApi = {
         apiFetch(`/users/${userId}/avatar`, {
             method: "PUT",
             body: formData
-        }, userId)
+        })
 };
 
 
@@ -123,20 +195,14 @@ export const gameApi = {
     getById: (gameId) =>
         apiGet(`/games/${gameId}`),
 
-    createRoom: (body, userId) =>
-        apiPost("/games", body, userId),
+    createRoom: (variantId) =>
+        apiPost("/games", { variantId }),
 
-    invite: (body, userId) =>
-        apiPost("/games/invite", body, userId),
+    joinRoom: (gameId) =>
+        apiPost(`/games/${gameId}/players`, {}),
 
-    acceptInvite: (gameId, userId) =>
-        apiPost(`/games/${gameId}/accept`, {}, userId),
-
-    declineInvite: (gameId, userId) =>
-        apiPost(`/games/${gameId}/decline`, {}, userId),
-
-    submitResult: (gameId, scores, userId) =>
-        apiPut(`/games/${gameId}/result`, scores, userId)
+    leaveRoom: (gameId, userId) =>
+        apiDelete(`/games/${gameId}/players/${userId}`)
 };
 
 
@@ -152,14 +218,29 @@ export const tournamentApi = {
     getStandings: (tournamentId) =>
         apiGet(`/tournaments/${tournamentId}/standings`),
 
-    join: (tournamentId, userId) =>
-        apiPost(`/tournaments/${tournamentId}/join`, {}, userId),
+    getGames: (tournamentId) =>
+        apiGet(`/tournaments/${tournamentId}/games`),
 
-    create: (data, adminId) =>
-        apiPost("/tournaments", data, adminId),
+    join: (tournamentId) =>
+        apiPost(`/tournaments/${tournamentId}/players`, {}),
 
-    update: (tournamentId, data, adminId) =>
-        apiPut(`/tournaments/${tournamentId}`, data, adminId)
+    leave: (tournamentId, userId) =>
+        apiDelete(`/tournaments/${tournamentId}/players/${userId}`),
+
+    create: (formData) =>
+        apiFetch("/tournaments", {
+            method: "POST",
+            body: formData // FormData for trophy image upload
+        }),
+
+    update: (tournamentId, data) =>
+        apiPut(`/tournaments/${tournamentId}`, data),
+
+    cancel: (tournamentId) =>
+        apiPut(`/tournaments/${tournamentId}/cancellation`, {}),
+
+    delete: (tournamentId) =>
+        apiDelete(`/tournaments/${tournamentId}`)
 };
 
 
@@ -169,11 +250,14 @@ export const commentApi = {
     getAll: (targetId, targetType, params = {}) =>
         apiGet(`/comments${buildQuery({ targetId, targetType, ...params })}`),
 
-    create: (body, userId) =>
-        apiPost("/comments", body, userId),
+    getRecent: (params = {}) =>
+        apiGet(`/comments/recent${buildQuery(params)}`),
 
-    delete: (commentId, adminId) =>
-        apiDelete(`/comments/${commentId}`, adminId)
+    create: (body) =>
+        apiPost("/comments", body),
+
+    delete: (commentId) =>
+        apiDelete(`/comments/${commentId}`)
 };
 
 
@@ -189,4 +273,15 @@ export const leaderboardApi = {
 
 export const activityApi = {
     get: () => apiGet("/activity")
+};
+
+
+// ADMIN ENDPOINTS
+
+export const adminApi = {
+    getDashboard: () =>
+        apiGet("/admin/dashboard"),
+
+    getIncidents: (params = {}) =>
+        apiGet(`/admin/incidents${buildQuery(params)}`)
 };
