@@ -4,7 +4,7 @@ import { getAccessToken } from "./api.js";
 const {
     VITE_API_HOSTNAME,
     VITE_API_PORT,
-    VITE_API_PROTOCOL,
+    VITE_API_PROTOCOL
 } = import.meta.env;
 
 const SOCKET_URL = `${VITE_API_PROTOCOL}://${VITE_API_HOSTNAME}:${VITE_API_PORT}`;
