@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { useAuth } from "../../hooks/useAuth.js";
+import { userApi } from "../../api/api.js";
 import styles from '../Profile/ProfilePage.module.css';
+
+const GAMES_PER_PAGE = 5;
 
 export default function ProfilePage() {
     const { id } = useParams();
     const { user: currentUser, login } = useAuth();
 
-    // Is this the logged-in user viewing their own profile?
     const resolvedId = id === 'me' && currentUser ? currentUser.userId : id;
     const isOwnProfile = currentUser && String(currentUser.userId) === String(resolvedId);
 
@@ -24,23 +26,24 @@ export default function ProfilePage() {
     const [saveError, setSaveError] = useState(null);
     const [saveOk, setSaveOk] = useState(false);
 
+    // Avatar upload state
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [avatarError, setAvatarError] = useState(null);
+    const fileInputRef = useRef(null);
+
+    // Recent games pagination
+    const [gamesShown, setGamesShown] = useState(GAMES_PER_PAGE);
+
     useEffect(() => {
         async function fetchUser() {
             try {
                 setLoading(true);
-                const res = await fetch(`http://localhost:9000/api/users/${resolvedId}`, {
-                    headers: currentUser ? { 'x-user-id': currentUser.userId } : {}
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    setError(data.msg || 'Failed to load profile.');
-                    return;
-                }
+                const data = await userApi.getById(resolvedId);
                 setUser(data);
                 setEditEmail(data.email || '');
                 setEditAbout(data.aboutMe || '');
-            } catch {
-                setError('Could not connect to the server.');
+            } catch (err) {
+                setError(err.message || 'Could not connect to the server.');
             } finally {
                 setLoading(false);
             }
@@ -60,29 +63,35 @@ export default function ProfilePage() {
         if (editPwd.trim()) updates.pwd = editPwd.trim();
 
         try {
-            const res = await fetch(`http://localhost:9000/api/users/${resolvedId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-user-id': currentUser.userId
-                },
-                body: JSON.stringify(updates)
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                setSaveError(data.msg || 'Failed to save.');
-                return;
-            }
+            const data = await userApi.update(resolvedId, updates);
             setUser(data);
-            // Update username in auth context if it was somehow changed
             login(data.userId, data.username);
             setSaveOk(true);
             setEditing(false);
             setEditPwd('');
-        } catch {
-            setSaveError('Could not connect to the server.');
+        } catch (err) {
+            setSaveError(err.message || 'Could not connect to the server.');
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function handleAvatarChange(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setAvatarUploading(true);
+        setAvatarError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const data = await userApi.uploadAvatar(resolvedId, formData);
+            setUser(prev => ({ ...prev, avatar: data.avatar }));
+        } catch (err) {
+            setAvatarError(err.message || 'Failed to upload avatar.');
+        } finally {
+            setAvatarUploading(false);
         }
     }
 
@@ -90,20 +99,60 @@ export default function ProfilePage() {
     if (error) return <p style={{ padding: '2rem', color: 'red' }}>{error}</p>;
     if (!user) return <p style={{ padding: '2rem' }}>User not found.</p>;
 
+    const eloChange = user.eloRating != null && user.eloRatingLastWeek != null
+        ? user.eloRating - user.eloRatingLastWeek
+        : null;
+
+    const visibleGames = (user.recentGames || []).slice(0, gamesShown);
+
     return (
         <div className={styles.page}>
 
             {/* Profile header */}
             <div className={styles.profileHeader}>
-                <div className={styles.avatar}>
-                    {user.username?.[0]?.toUpperCase() || '?'}
+                <div className={styles.avatarWrapper}>
+                    {user.avatar ? (
+                        <img
+                            src={`http://localhost:9000/${user.avatar}`}
+                            alt={user.username}
+                            className={styles.avatarImg}
+                        />
+                    ) : (
+                        <div className={styles.avatar}>
+                            {user.username?.[0]?.toUpperCase() || '?'}
+                        </div>
+                    )}
+                    {isOwnProfile && (
+                        <>
+                            <button
+                                className={styles.avatarEditBtn}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={avatarUploading}
+                                title="Change avatar"
+                            >
+                                {avatarUploading ? '...' : '✎'}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handleAvatarChange}
+                            />
+                        </>
+                    )}
+                    {avatarError && <p className={styles.error}>{avatarError}</p>}
                 </div>
 
                 <div className={styles.userInfo}>
                     <h1 className={styles.username}>{user.username}</h1>
                     {isOwnProfile && <p className={styles.email}>{user.email}</p>}
                     <p className={styles.about}>{user.aboutMe || 'No bio yet.'}</p>
-
+                    {isOwnProfile && (
+                        <div className={styles.pointsBadge}>
+                            {user.points ?? 0} pts
+                        </div>
+                    )}
                     {isOwnProfile && (
                         <button className="button button-secondary" onClick={() => setEditing(v => !v)}>
                             {editing ? 'Cancel' : 'Edit Profile'}
@@ -162,14 +211,11 @@ export default function ProfilePage() {
                     </div>
                     <div className={styles.statCard}>
                         <span className={styles.statValue}>{user.recentGames?.length ?? 0}</span>
-                        <span className={styles.statLabel}>Games Played</span>
+                        <span className={styles.statLabel}>Recent Games</span>
                     </div>
                     <div className={styles.statCard}>
-                        <span className={styles.statValue}>
-                            {user.eloRating != null && user.eloRatingLastWeek != null
-                                ? (user.eloRating - user.eloRatingLastWeek > 0 ? '+' : '')
-                                + (user.eloRating - user.eloRatingLastWeek)
-                                : '-'}
+                        <span className={`${styles.statValue} ${eloChange > 0 ? styles.positive : eloChange < 0 ? styles.negative : ''}`}>
+                            {eloChange != null ? (eloChange > 0 ? `+${eloChange}` : eloChange) : '-'}
                         </span>
                         <span className={styles.statLabel}>Elo change (week)</span>
                     </div>
@@ -177,6 +223,12 @@ export default function ProfilePage() {
                         <span className={styles.statValue}>{user.trophies?.length ?? 0}</span>
                         <span className={styles.statLabel}>Trophies</span>
                     </div>
+                    {isOwnProfile && (
+                        <div className={styles.statCard}>
+                            <span className={styles.statValue}>{user.points ?? 0}</span>
+                            <span className={styles.statLabel}>Points</span>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -206,20 +258,31 @@ export default function ProfilePage() {
             {/* Recent Games */}
             <section className={styles.section}>
                 <h2>Recent Games</h2>
-                {!user.recentGames || user.recentGames.length === 0 ? (
+                {visibleGames.length === 0 ? (
                     <p className={styles.empty}>No games played yet.</p>
                 ) : (
-                    <div className={styles.gamesList}>
-                        {user.recentGames.map((game, i) => (
-                            <Link
-                                key={i}
-                                to={`/games/${game._id || game}`}
-                                className={styles.gameLink}
+                    <>
+                        <div className={styles.gamesList}>
+                            {visibleGames.map((game, i) => (
+                                <Link
+                                    key={i}
+                                    to={`/games/${game.gameId || game._id || game}`}
+                                    className={styles.gameLink}
+                                >
+                                    <span>Game #{game.gameId || String(game._id || game).slice(-6)}</span>
+                                    <span className={styles.gameStatus}>{game.status || ''}</span>
+                                </Link>
+                            ))}
+                        </div>
+                        {gamesShown < (user.recentGames?.length || 0) && (
+                            <button
+                                className={`button button-secondary ${styles.loadMore}`}
+                                onClick={() => setGamesShown(n => n + GAMES_PER_PAGE)}
                             >
-                                Game {String(game._id || game).slice(-6)}
-                            </Link>
-                        ))}
-                    </div>
+                                Load more
+                            </button>
+                        )}
+                    </>
                 )}
             </section>
 
