@@ -102,3 +102,30 @@
 .joinBtn:active {
     transform: scale(0.97);
 }
+
+.cardDark::before,
+.cardDark::after {
+    color: #1a0a0a;
+}
+
+.cardDark .players {
+    color: #1a0a0a;
+}
+
+.cardDark .variant {
+    color: #2a1a1a;
+}
+
+.cardDark .elo {
+    color: #2a1a1a;
+}
+
+.cardDark .joinBtn {
+    background: #1a0a0a;
+    color: #f5f0e4;
+    border: none;
+}
+
+.cardDark .joinBtn:hover {
+    background: #3e2d2d;
+}
