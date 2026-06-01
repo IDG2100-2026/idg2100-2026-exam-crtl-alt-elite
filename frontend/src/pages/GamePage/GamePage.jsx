@@ -111,16 +111,20 @@ export default function GamePage() {
         setSubmitting(true);
         setCommentErr(null);
         try {
-            await commentApi.create({
-                targetId: id,
-                targetType: 'game',
+            const socket = getSocket();
+            if (!socket) throw new Error("Not connected to server.");
+
+            // Post via WebSocket so the broadcast fires to all users in the room
+            // REST endpoint doesn't trigger the broadcast
+            socket.emit("post_comment", {
+                targetType: "game",
+                targetId: Number(id),
                 content: comment.trim()
             });
-            setComment('');
-            // Comment will appear via WebSocket broadcast
-            // No need to refetch
+
+            setComment("");
         } catch (err) {
-            setCommentErr(err.message || 'Failed to post comment.');
+            setCommentErr(err.message || "Failed to post comment.");
         } finally {
             setSubmitting(false);
         }

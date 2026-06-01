@@ -1,0 +1,194 @@
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.headerTop {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.description {
+    color: var(--color-text-muted, #c4c4c4);
+    max-width: 700px;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.upcoming { background: #e8f4fd; color: #1a6fa8; }
+.badge.ongoing { background: #e8fde8; color: #1a7a1a; }
+.badge.finished { background: #f0f0f0; color: #555; }
+.badge.cancelled { background: #fde8e8; color: #8b0000; }
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.trophy {
+    display: flex;
+    justify-content: center;
+}
+
+.trophyImage {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: contain;
+}
+
+.countdown {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--color-surface, #f9f9f9);
+    border-radius: 8px;
+}
+
+.countdownTimer {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+}
+
+.rules ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 0.5rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.winner td {
+    font-weight: 700;
+    color: goldenrod;
+}
+
+.playerList {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+
+.commentList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 1rem 0;
+    background-color: #effff04c;
+    border-radius: 10px;
+}
+
+.comment {
+    display: flex;
+    flex-direction: column;
+    /* gap: 0.2rem; */
+    margin-top: 1rem;
+    background-color: #1f5c3f68;
+    width: 90%;
+    justify-self: center;
+}
+
+.commentDate {
+    font-size: 0.75rem;
+    color: #202020;
+}
+
+.commentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.commentForm textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    resize: vertical;
+}
+
+.gameList {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.empty {
+    color: #999;
+    font-style: italic;
+}
+
+.error {
+    color: red;
+    font-size: 0.9rem;
+}

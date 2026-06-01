@@ -1,5 +1,6 @@
 import { Tournament } from "../models/tournament.js";
 import { Game } from "../models/game.js";
+import { User } from "../models/user.js";
 import tournamentServices from "../services/tournament.services.js";
 
 import {
@@ -92,7 +93,22 @@ export async function getTournament(req, res, next) {
         await tournament.populate("trophyId");
         await tournament.populate("matches.gameId");
 
-        res.json(tournament);
+        // Enrich player list with usernames
+        // Single query to avoid N+1 problem
+        const playerUsers = await User.find(
+            { userId: { $in: tournament.players } },
+            { userId: 1, username: 1, eloRating: 1 }
+        );
+        const userMap = new Map(playerUsers.map(u => [u.userId, u]));
+
+        const tournamentObj = tournament.toObject();
+        tournamentObj.playerDetails = tournament.players.map(userId => ({
+            userId,
+            username: userMap.get(userId)?.username ?? String(userId),
+            eloRating: userMap.get(userId)?.eloRating ?? 1000
+        }));
+
+        res.json(tournamentObj);
     } catch (err) {
         next(err);
     }
