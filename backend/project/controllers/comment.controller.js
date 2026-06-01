@@ -1,4 +1,5 @@
 import { Comment } from "../models/comment.js";
+import { User } from "../models/user.js";
 import commentServices from "../services/comment.services.js";
 
 import {
@@ -15,13 +16,11 @@ export async function getComments(req, res, next) {
 
         // Both required to identify what we're fetching comments for
         if (!targetId || !targetType) {
-            // Bad request
             return res.status(400).json({ msg: "targetId and targetType are required" });
         }
 
         // Has to actually have a valid target type
         if (!commentServices.isValidTargetType(targetType)) {
-            // Bad request
             return res.status(400).json({ msg: "targetType must be either 'game' or 'tournament'" });
         }
 
@@ -29,19 +28,33 @@ export async function getComments(req, res, next) {
         // but admins can
         const filter = commentServices.buildCommentFilter(targetId, targetType, req.user.role);
 
-        // Using the filter to filter through the comments
         const comments = await Comment.find(filter)
-            .sort({ createdAt: -1 }) // Newest first
-            .skip((page - 1) * limit) // Skips over comments from the previous page
-            .limit(Number(limit)); // Limits so it returns only 20 comments maximum per request
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(Number(limit));
 
         const total = await Comment.countDocuments(filter);
+
+        // Enrich comments with usernames
+        // Single query to avoid N+1 problem
+        const userIds = [...new Set(comments.map(c => c.userId))];
+        const users = await User.find(
+            { userId: { $in: userIds } },
+            { userId: 1, username: 1, avatar: 1 }
+        );
+        const userMap = new Map(users.map(u => [u.userId, u]));
+
+        const enrichedComments = comments.map(c => ({
+            ...c.toObject(),
+            username: userMap.get(c.userId)?.username ?? "Anonymous",
+            avatar: userMap.get(c.userId)?.avatar ?? null
+        }));
 
         res.json({
             total,
             page: Number(page),
             totalPages: Math.ceil(total / limit),
-            comments
+            comments: enrichedComments
         });
     } catch (err) {
         next(err);

@@ -25,7 +25,7 @@ import CreateGame from './pages/CreateGame/CreateGame.jsx';
 
 // Tournament pages - uncomment when created
 // import TournamentListPage from './pages/Tournament/TournamentListPage.jsx';
-// import TournamentPage from './pages/Tournament/TournamentPage.jsx';
+import TournamentPage from './pages/Tournament/TournamentPage.jsx';
 
 // Admin pages - uncomment when created
 // import AdminLayout from './layouts/AdminLayout.jsx';
@@ -60,7 +60,7 @@ function AppRoutes() {
 
           {/* Tournament routes. uncomment when created */}
           {/* <Route path="tournaments" element={<TournamentListPage />} /> */}
-          {/* <Route path="tournaments/:id" element={<TournamentPage />} /> */}
+          <Route path="tournaments/:id" element={<TournamentPage />} />
 
           {/* Profile routes */}
           <Route path="profile/:id" element={<ProfilePage />} />
