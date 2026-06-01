@@ -2,6 +2,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cookieParser from "cookie-parser";
+import { createServer } from "http";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import cors from "cors";
@@ -11,12 +12,13 @@ import { errorHandler } from "./middleware/errorhandler.js";
 import apiRouter from "./routers/api.router.js";
 import nonApiRouter from "./routers/non.api.router.js";
 import { connectDB, disconnectDB } from "./config/db.js";
+import { initSocket } from "./websocket/socket.js";
 
 // Sometimes it won't work if i don't include this
 // might be a windows thing?
 dotenv.config();
 
-// awaiting mongoose to connect to mongodb
+// Awaiting mongoose to connect to mongodb
 await connectDB();
 
 // Creating an express app
@@ -49,16 +51,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 
 // 404 handler, catches any request that didn't match a route
+// Must be registered after all other routes and before errorHandler
 app.use((req, res) => {
     res.status(404).json({ msg: `Route ${req.method} ${req.originalUrl} not found` });
 });
 
 app.use(errorHandler);
 
-// listening on a port 
-const httpServer = app.listen(process.env.BACKEND_PORT);
-// Want to see it in the terminal
-httpServer.on("listening", ()=> console.log("the app is listening on port", httpServer.address().port));
+// Create HTTP server explicitly so Socket.io can share it
+// Previously app.listen() created the server implicitly
+const httpServer = createServer(app);
+
+// Attach Socket.io to the HTTP server
+initSocket(httpServer);
+
+// listening on a port
+httpServer.listen(process.env.BACKEND_PORT, () => {
+    console.log("the app is listening on port", process.env.BACKEND_PORT);
+});
 
 // Graceful shutdown handling
 async function gracefulShutdown() {
