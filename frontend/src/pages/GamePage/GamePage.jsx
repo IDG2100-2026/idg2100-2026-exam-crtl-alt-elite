@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { useAuth } from "../../hooks/useAuth.js";
+import { useSettings } from '@/context/SettingsContext';
 import GameBoard from '@/components/Dice/GameBoard';
 import '@/components/Dice/dice-poker-monitor.js';
 import styles from './GamePage.module.css';
@@ -37,6 +38,7 @@ function CommentList({ comments }) {
 export default function GamePage() {
     const { id } = useParams();
     const { user } = useAuth();
+    const { boardColor } = useSettings();
 
     const [game, setGame] = useState(null);
     const [comments, setComments] = useState([]);
@@ -151,7 +153,7 @@ export default function GamePage() {
                         </div>
                     </div>
 
-                    <div className={styles.board}>
+                    <div className={styles.board} style={{ background: boardColor }}>
                         {game.status === 'waiting' && (
                             <div className={styles.waitingOverlay}>
                                 <div className={styles.waitingBox}>
