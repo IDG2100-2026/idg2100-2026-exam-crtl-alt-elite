@@ -1,13 +1,37 @@
 :root {
-  --color-secondary: #025939;
-  --color-secondary-hover: #014029;
+  /* Brand greens */
+  --brand-green: #1a4730;
+  --brand-green-dark: #025939;
+  --brand-green-darker: #014029;
 
-  /* base colors (light mode) */
+  /* Brand accent colors */
+  --brand-cream: #f5f0e8;
+  --brand-cream-border: #d4c9b0;
+  --brand-red: #7a1c1c;
+  --brand-red-hover: #5e1515;
+
+  /* Text on cream */
+  --cream-text: #3a5c47;
+  --cream-text-muted: #5a4a3a;
+
+  /* Light mode */
   --color-bg: #f4f4f4;
   --color-text: #1a1a1a;
   --color-surface: #ffffff;
-  --color-text-heading: #025939;
+  --color-text-heading: var(--brand-green);
   --color-border: #e5e5e5;
+  --color-secondary: var(--brand-green-dark);
+  --color-secondary-hover: var(--brand-green-darker);
+  --nav-bg: var(--brand-cream);
+  --nav-border: var(--brand-cream-border);
+
+  /* Dark mode section colors */
+  --dark-bg-deep: #0e2218;
+  --dark-bg-mid: #1a3828;
+  --dark-border: #254d35;
+  --dark-text: #e8f2ed;
+  --dark-text-muted: #82a894;
+  --dark-link: #c8ddd0;
 
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
@@ -16,56 +40,40 @@
   /* Typography */
   --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --font-heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-
   --font-size-base: 18px;
   --font-size-title: 6rem;
   --font-size-h1: 56px;
   --font-size-h2: 24px;
 
-  /* Navbar */
-  --nav-bg: #ffffff;
-
-  /* Global */
   font-family: var(--font-sans);
   font-size: var(--font-size-base);
   line-height: 1.45;
-
   color: var(--color-text);
   background: var(--color-bg);
-
   color-scheme: light dark;
 }
 
 /* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #1f5c3f;
-    --color-surface: #2c6b4a;
-    --color-text: #E8f2ed;
-    --color-text-heading: #fdfaf6;
-    --color-border: #2f7a56;
-
-    --color-secondary: #025939;
-    --color-secondary-hover: #014029;
-
-    --nav-bg: #0a2718;
-  }
+[data-theme="dark"] {
+  --color-bg: #132b1c;
+  --color-surface: var(--dark-bg-mid);
+  --color-text: var(--dark-text);
+  --color-text-heading: #fdfaf6;
+  --color-border: var(--dark-border);
+  --color-secondary: var(--brand-green-dark);
+  --color-secondary-hover: var(--brand-green-darker);
+  --nav-bg: var(--dark-bg-deep);
+  --nav-border: var(--dark-bg-mid);
 }
 
-html, body, #root {
-  height: 100%;
-}
+html, body, #root { height: 100%; }
 
-/* Layout */
-body {
-  margin: 0;
-}
+body { margin: 0; }
 
 #root {
   width: 100%;
   margin: 0 auto;
   text-align: center;
-
 }
 
 .layout {
@@ -74,45 +82,36 @@ body {
   flex-direction: column;
 }
 
- 
+.content { flex: 1; }
 
 /* Typography */
-h1,
-h2 {
+h1, h2 {
   font-family: var(--font-heading);
   font-weight: 500;
   color: var(--color-text-heading);
   margin: 0;
 }
 
-h1 {
-  font-size: var(--font-size-h1);
-}
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
 
-h2 {
-  font-size: var(--font-size-h2);
-}
-
-/* button system */
+/* Button system */
 .button {
   padding: 12px 20px;
   border-radius: 10px;
   border: none;
   font-size: 16px;
   cursor: pointer;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-   transition: all 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .button-secondary {
   background: var(--color-secondary);
-  color: var(--color-text-heading);
+  color: var(--color-surface);
   border: 1px solid var(--color-border);
 }
 
-.button:active {
-  transform: scale(0.97);
-}
+.button:active { transform: scale(0.97); }

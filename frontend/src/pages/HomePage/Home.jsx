@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Link } from "react-router";
 import GameCard from "@/components/GameCard/GameCard";
+import { useSettings } from "@/context/SettingsContext";
 import Styles from "./Home.module.css";
 import mainImg from "@/assets/mainPokerDice-bk.png";
 
 export default function Home() {
     const navigate = useNavigate();
+    const { lobbyGamesCount } = useSettings();
 
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
@@ -19,7 +21,7 @@ export default function Home() {
                 setLoading(true);
                 setError(null);
 
-                const lobbyRes = await fetch("http://localhost:9000/api/games?status=room&limit=5");
+                const lobbyRes = await fetch(`http://localhost:9000/api/games?status=room&limit=${lobbyGamesCount}`);
                 const lobbyData = await lobbyRes.json();
                 setLobbyGames(lobbyData.games ?? []);
 
@@ -33,7 +35,7 @@ export default function Home() {
             }
         }
         fetchData();
-    }, []);
+    }, [lobbyGamesCount]);
 
     return (
         <div className={Styles.homeContainer}>
