@@ -21,6 +21,7 @@ import Home from './pages/HomePage/Home.jsx';
 import LobbyPage from './pages/Lobby/LobbyPage.jsx';
 import GamePage from './pages/GamePage/GamePage.jsx';
 import ProfilePage from './pages/Profile/ProfilePage.jsx';
+import CreateGame from './pages/CreateGame/CreateGame.jsx';
 
 // Tournament pages - uncomment when created
 // import TournamentListPage from './pages/Tournament/TournamentListPage.jsx';
@@ -52,6 +53,8 @@ function AppRoutes() {
           <Route path="privacy" element={<PrivacyPage />} />
 
           {/* Game routes */}
+          
+          <Route path="createGame" element={<CreateGame />} />
           <Route path="lobby" element={<LobbyPage />} />
           <Route path="games/:id" element={<GamePage />} />
 
