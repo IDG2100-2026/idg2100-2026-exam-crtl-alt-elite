@@ -1,26 +1,26 @@
 // copied from oblig 3 
 import styles from './StaticPage.module.css';
 
-const VARIANTS = [
-  { rounds: 3, straights: false, time: 3 },
-  { rounds: 3, straights: false, time: 10 },
-  { rounds: 3, straights: false, time: 30 },
-  { rounds: 3, straights: true, time: 3 },
-  { rounds: 3, straights: true, time: 10 },
-  { rounds: 3, straights: true, time: 30 },
-  { rounds: 5, straights: false, time: 3 },
-  { rounds: 5, straights: false, time: 10 },
-  { rounds: 5, straights: false, time: 30 },
-  { rounds: 5, straights: true, time: 3 },
-  { rounds: 5, straights: true, time: 10 },
-  { rounds: 5, straights: true, time: 30 },
-  { rounds: 7, straights: false, time: 3 },
-  { rounds: 7, straights: false, time: 10 },
-  { rounds: 7, straights: false, time: 30 },
-  { rounds: 7, straights: true, time: 3 },
-  { rounds: 7, straights: true, time: 10 },
-  { rounds: 7, straights: true, time: 30 },
-];
+// const VARIANTS = [
+//   { rounds: 3, straights: false, time: 3 },
+//   { rounds: 3, straights: false, time: 10 },
+//   { rounds: 3, straights: false, time: 30 },
+//   { rounds: 3, straights: true, time: 3 },
+//   { rounds: 3, straights: true, time: 10 },
+//   { rounds: 3, straights: true, time: 30 },
+//   { rounds: 5, straights: false, time: 3 },
+//   { rounds: 5, straights: false, time: 10 },
+//   { rounds: 5, straights: false, time: 30 },
+//   { rounds: 5, straights: true, time: 3 },
+//   { rounds: 5, straights: true, time: 10 },
+//   { rounds: 5, straights: true, time: 30 },
+//   { rounds: 7, straights: false, time: 3 },
+//   { rounds: 7, straights: false, time: 10 },
+//   { rounds: 7, straights: false, time: 30 },
+//   { rounds: 7, straights: true, time: 3 },
+//   { rounds: 7, straights: true, time: 10 },
+//   { rounds: 7, straights: true, time: 30 }
+// ];
 
 // Hand rankings from constants.js
 const HANDS = [
@@ -31,7 +31,7 @@ const HANDS = [
   { name: 'Doble Pareja', desc: 'Two different pairs.' },
   { name: 'Pareja', desc: 'One pair.' },
   { name: 'Escalera', desc: 'A straight (only counts when straights are enabled).' },
-  { name: 'Carta Alta', desc: 'Highest single die - the lowest hand.' },
+  { name: 'Carta Alta', desc: 'Highest single die - the lowest hand.' }
 ];
 
 export default function AboutDicePage() {
@@ -86,15 +86,17 @@ export default function AboutDicePage() {
         <section className={styles.section}>
           <h2>Game Variants</h2>
           <p>
-            Our platform offers <strong>18 different variants</strong>, combining three
+            Our platform offers <strong>162 different variants</strong>, combining three
             settings:
           </p>
           <ul className={styles.variantPoints}>
             <li><strong>Rounds:</strong> Best of 3, 5, or 7 - how many rounds determine the winner.</li>
             <li><strong>Straights:</strong> Whether the Escalera (straight) hand is counted.</li>
-            <li><strong>Time Control:</strong> 3, 10, or 30 seconds per roll decision.</li>
+            <li><strong>Time Control:</strong> 10, 30, or 90 seconds per round.</li>
+            <li><strong>Number of Players:</strong> 2, 3, or 5 players.</li>
+            <li><strong>Buy-in:</strong> 1, 10 or 50 points to buy into a game.</li>
           </ul>
-          <table className={styles.variantTable}>
+          {/* <table className={styles.variantTable}>
             <thead>
               <tr><th>Best of</th><th>Straights</th><th>Seconds/Round</th></tr>
             </thead>
@@ -107,7 +109,7 @@ export default function AboutDicePage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table> */}
         </section>
 
         <section className={styles.section}>
