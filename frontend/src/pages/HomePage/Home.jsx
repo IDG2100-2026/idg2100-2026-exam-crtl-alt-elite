@@ -66,8 +66,8 @@ export default function Home() {
                     <p className={Styles.emptyMsg}>No games waiting right now.</p>
                 ) : (
                     <div className={Styles.grid}>
-                        {lobbyGames.map(game => (
-                            <GameCard key={game.gameId ?? game._id} game={game} showJoin onJoin={g => navigate(`/games/${g.gameId}`)} />
+                        {lobbyGames.map((game, index) => (
+                            <GameCard key={game.gameId ?? game._id} game={game} index={index} showJoin onJoin={g => navigate(`/games/${g.gameId}`)} />
                         ))}
                     </div>
                 )}
@@ -83,8 +83,8 @@ export default function Home() {
                     <p className={Styles.emptyMsg}>No active games at the moment.</p>
                 ) : (
                     <div className={Styles.grid}>
-                        {topGames.map(game => (
-                            <GameCard key={game.gameId ?? game._id} game={game} />
+                        {topGames.map((game, index) => (
+                            <GameCard key={game.gameId ?? game._id} game={game} index={index} />
                         ))}
                     </div>
                 )}

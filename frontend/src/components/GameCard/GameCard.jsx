@@ -1,19 +1,20 @@
 import { useNavigate } from "react-router";
 import styles from "./GameCard.module.css";
 
-export default function GameCard({ game, showJoin = false, onJoin }) {
+export default function GameCard({ game, showJoin = false, onJoin, index = 0 }) {
     const navigate = useNavigate();
     const variant = game.variantId;
 
-    const p0Name = game.playerOne?.username ?? "Player 1";
-    const p1Name = game.playerTwo?.username ?? "Waiting";
+    // New game model uses players array instead of playerOne/playerTwo
+    const p0Name = game.players?.[0]?.username ?? "Unknown";
+    const p1Name = game.players?.[1]?.username ?? "Waiting...";
 
     const variantText = variant
         ? `Best of ${variant.rounds} - ${variant.straightsAllowed ? "straights" : "no straights"} - ${variant.timeControl}s`
         : "Unknown variant";
 
     const avgElo = (() => {
-        const elos = [game.playerOne?.eloRating, game.playerTwo?.eloRating].filter(Boolean);
+        const elos = game.players?.map(p => p.eloRating).filter(Boolean) ?? [];
         if (elos.length === 0) return 1000;
         return Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
     })();
@@ -24,7 +25,7 @@ export default function GameCard({ game, showJoin = false, onJoin }) {
     }
 
     return (
-        <div className={styles.card}>
+        <div className={`${styles.card} ${index % 2 === 1 ? styles.cardDark : ""}`}>
             <div className={styles.players}>
                 {p0Name} VS {p1Name}
             </div>
@@ -38,7 +39,8 @@ export default function GameCard({ game, showJoin = false, onJoin }) {
             </div>
 
             <button className={styles.joinBtn} onClick={handleJoin}>
-                {showJoin && game.status === "waiting" ? "JOIN" : "VIEW"}
+                {/* Room status replaces the old waiting status */}
+                {showJoin && game.status === "room" ? "JOIN" : "VIEW"}
             </button>
         </div>
     );

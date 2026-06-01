@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
+import { gameApi } from "../../api/api.js";
 import GameCard from "@/components/GameCard/GameCard";
 import styles from "./LobbyPage.module.css";
 
@@ -20,12 +21,11 @@ export default function LobbyPage() {
                 setLoading(true);
                 setError(null);
 
-                const params = new URLSearchParams({ status: "room", limit: 20 });
-                if (filterRounds) params.append("rounds", filterRounds);
-                if (filterTime) params.append("timeControl", filterTime);
+                const params = { status: "room", limit: 20 };
+                if (filterRounds) params.rounds = filterRounds;
+                if (filterTime) params.timeControl = filterTime;
 
-                const res = await fetch(`http://localhost:9000/api/games?${params}`);
-                const data = await res.json();
+                const data = await gameApi.getAll(params);
                 setGames(data.games ?? []);
             } catch {
                 setError("Failed to load games. Is the backend running?");
@@ -59,12 +59,12 @@ export default function LobbyPage() {
                 </div>
 
                 <div className={styles.filterGroup}>
-                    <label>Time per Round</label>
+                    <label>Total Time</label>
                     <select value={filterTime} onChange={e => setFilterTime(e.target.value)}>
                         <option value="">Any</option>
-                        <option value="3">3 seconds</option>
                         <option value="10">10 seconds</option>
                         <option value="30">30 seconds</option>
+                        <option value="90">90 seconds</option>
                     </select>
                 </div>
 
@@ -90,10 +90,11 @@ export default function LobbyPage() {
                     </div>
                 ) : (
                     <div className={styles.grid}>
-                        {games.map(game => (
+                        {games.map((game, index) => (
                             <GameCard
                                 key={game.gameId ?? game._id}
                                 game={game}
+                                index={index}
                                 showJoin
                                 onJoin={g => navigate(`/games/${g.gameId}`)}
                             />
