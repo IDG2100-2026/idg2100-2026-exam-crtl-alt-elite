@@ -79,8 +79,18 @@ export async function login(req, res, next) {
         }
 
         if (!user.emailVerified) {
-            // Forbidden
-            return res.status(403).json({ msg: "Please verify your email before logging in" });
+            // Resend verification email so the user doesn't have to find the resend form
+            try {
+                const verificationToken = authServices.setVerificationToken(user);
+                await user.save();
+                await sendVerificationEmail(user.email, verificationToken);
+            } catch (err) {
+                console.error("Failed to resend verification email on login attempt:", err.message);
+            }
+
+            return res.status(403).json({ 
+                msg: "Please verify your email before logging in. A new verification email has been sent." 
+            });
         }
 
         // Issue access and refresh tokens 

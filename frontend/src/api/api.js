@@ -2,7 +2,7 @@
 const {
     VITE_API_HOSTNAME,
     VITE_API_PORT,
-    VITE_API_PROTOCOL,
+    VITE_API_PROTOCOL
 } = import.meta.env;
 
 const API_URL = `${VITE_API_PROTOCOL}://${VITE_API_HOSTNAME}:${VITE_API_PORT}/api`;
