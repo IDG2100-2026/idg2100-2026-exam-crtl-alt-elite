@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { useAuth } from "../../hooks/useAuth.js";
+import { gameApi, commentApi } from "../../api/api.js";
+import { getSocket } from "../../api/socket.js";
 import GameBoard from '@/components/Dice/GameBoard';
 import '@/components/Dice/dice-poker-monitor.js';
 import styles from './GamePage.module.css';
@@ -23,7 +25,7 @@ function CommentList({ comments }) {
             {sorted.map((c, i) => (
                 <li key={c._id || i} className={styles.comment}>
                     <div className={styles.commentMeta}>
-                        <strong>{c.userId?.username || 'Anonymous'}</strong>
+                        <strong>{c.username || c.userId || 'Anonymous'}</strong>
                         <span>{new Date(c.createdAt).toLocaleString()}</span>
                     </div>
                     <p>{c.content}</p>
@@ -50,16 +52,13 @@ export default function GamePage() {
     useEffect(() => {
         async function fetchGame() {
             try {
-                const res = await fetch(`http://localhost:9000/api/games/${id}`, {
-                    headers: user ? { 'x-user-id': user.userId } : {}
-                });
-                const data = await res.json();
-                if (!res.ok) { setError(data.msg || 'Failed to load game.'); return; }
+                const data = await gameApi.getById(id);
                 setGame(data);
                 setError(null);
-                if (data.status !== 'waiting') clearInterval(pollRef.current);
-            } catch {
-                setError('Could not connect to the server.');
+                // Stop polling once game has started
+                if (data.status !== 'room') clearInterval(pollRef.current);
+            } catch (err) {
+                setError(err.message || 'Failed to load game.');
             } finally {
                 setLoading(false);
             }
@@ -67,8 +66,7 @@ export default function GamePage() {
 
         async function fetchComments() {
             try {
-                const res = await fetch(`http://localhost:9000/api/comments?targetId=${id}&targetType=game`);
-                const data = await res.json();
+                const data = await commentApi.getAll(id, 'game');
                 setComments(data.comments ?? []);
             } catch {
                 // silently fail
@@ -78,9 +76,34 @@ export default function GamePage() {
         fetchGame();
         fetchComments();
 
+        // Poll every 15 seconds while game is in room status
         pollRef.current = setInterval(fetchGame, 15000);
         return () => clearInterval(pollRef.current);
-    }, [id, user]);
+    }, [id]);
+
+    // Join WebSocket comment room for live comments
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket) return;
+
+        // Join the comment room for this game
+        socket.emit('join_comments', { targetType: 'game', targetId: Number(id) });
+
+        // Listen for new comments
+        socket.on('new_comment', (newComment) => {
+            setComments(prev => [...prev, newComment]);
+        });
+
+        // Listen for deleted comments
+        socket.on('comment_deleted', ({ commentId }) => {
+            setComments(prev => prev.filter(c => c._id !== commentId));
+        });
+
+        return () => {
+            socket.off('new_comment');
+            socket.off('comment_deleted');
+        };
+    }, [id]);
 
     async function handleCommentSubmit(e) {
         e.preventDefault();
@@ -88,23 +111,16 @@ export default function GamePage() {
         setSubmitting(true);
         setCommentErr(null);
         try {
-            const res = await fetch('http://localhost:9000/api/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-user-id': user.userId
-                },
-                body: JSON.stringify({ targetId: id, targetType: 'game', content: comment.trim() })
+            await commentApi.create({
+                targetId: id,
+                targetType: 'game',
+                content: comment.trim()
             });
-            const data = await res.json();
-            if (!res.ok) { setCommentErr(data.msg || 'Failed to post comment.'); return; }
             setComment('');
-            // Refetch comments to show the new one
-            const updated = await fetch(`http://localhost:9000/api/comments?targetId=${id}&targetType=game`);
-            const updatedData = await updated.json();
-            setComments(updatedData.comments ?? []);
-        } catch {
-            setCommentErr('Could not connect to the server.');
+            // Comment will appear via WebSocket broadcast
+            // No need to refetch
+        } catch (err) {
+            setCommentErr(err.message || 'Failed to post comment.');
         } finally {
             setSubmitting(false);
         }
@@ -114,16 +130,17 @@ export default function GamePage() {
     if (error) return <p style={{ padding: '2rem', color: 'red' }}>{error}</p>;
     if (!game) return null;
 
-    const p0 = game.playerOne;
-    const p1 = game.playerTwo;
-    const p0Name = p0?.username || 'Anonymous';
-    const p1Name = p1?.username || 'Waiting...';
+    // New game model uses players array instead of playerOne/playerTwo
+    const p0 = game.players?.[0];
+    const p1 = game.players?.[1];
+    const p0Name = p0?.username || 'Unknown';
+    const p1Name = p1?.username || (game.status === 'room' ? 'Waiting...' : 'Unknown');
     const p0Elo = p0?.eloRating || '-';
     const p1Elo = p1?.eloRating || '-';
 
     const variant = game.variantId;
     const variantLabel = variant
-        ? `Best of ${variant.rounds} · ${variant.timeControl}s/round · Straights ${variant.straightsAllowed ? 'on' : 'off'}`
+        ? `Best of ${variant.rounds} · ${variant.timeControl}s total · Straights ${variant.straightsAllowed ? 'on' : 'off'} · ${variant.numPlayers} players · ${variant.buyIn} pt buy-in`
         : 'Unknown variant';
 
     return (
@@ -152,10 +169,13 @@ export default function GamePage() {
                     </div>
 
                     <div className={styles.board}>
-                        {game.status === 'waiting' && (
+                        {game.status === 'room' && (
                             <div className={styles.waitingOverlay}>
                                 <div className={styles.waitingBox}>
-                                    <p>Waiting for another player to join...</p>
+                                    <p>Waiting for players to join...</p>
+                                    <p className={styles.pollNote}>
+                                        {game.players?.length}/{variant?.numPlayers} players joined
+                                    </p>
                                     <p className={styles.pollNote}>Page refreshes automatically every 15 seconds.</p>
                                 </div>
                             </div>
@@ -164,7 +184,12 @@ export default function GamePage() {
                             <GameBoard game={game} />
                         )}
                         {game.status === 'finished' && (
-                            <div className={styles.placeholderMsg}>Game finished</div>
+                            <div className={styles.placeholderMsg}>
+                                Game finished
+                                {game.winnerId?.length > 0 && (
+                                    <p>Winner: {game.winnerId.join(', ')}</p>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
