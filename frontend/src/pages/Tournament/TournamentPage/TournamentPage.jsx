@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { useAuth } from "../../hooks/useAuth.js";
-import { useCountdown } from "../../hooks/useCountdown.js";
-import { tournamentApi, commentApi } from "../../api/api.js";
-import { getSocket } from "../../api/socket.js";
+import { useAuth } from "../../../hooks/useAuth.js";
+import { useCountdown } from "../../../hooks/useCountdown.js";
+import { tournamentApi, commentApi } from "../../../api/api.js";
+import { getSocket } from "../../../api/socket.js";
 import styles from "./TournamentPage.module.css";
 
 function CommentSection({ tournamentId, user }) {
