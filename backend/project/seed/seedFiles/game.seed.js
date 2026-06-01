@@ -5,28 +5,48 @@ import { GameVariant } from "../../models/gameVariant.js";
 // Returns a random element from an array
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// Seeds 10 finished games between seeded users with random scores and winners
+// Seeds finished games with the new players array structure
+// Each game has between 2 and 5 players depending on the variant
 async function _seedFinishedGames(users, variants) {
     const gameDocs = [];
 
     for (let i = 0; i < 10; i++) {
-        // Pick two different players using modulo to cycle through the users array
-        const p1 = users[i % users.length];
-        const p2 = users[(i + 1) % users.length];
         const variant = pick(variants);
+        const numPlayers = variant.numPlayers;
 
-        // Random scores between 0 and 3
-        const p1Score = Math.floor(Math.random() * 4);
-        const p2Score = Math.floor(Math.random() * 4);
+        // Pick the required number of players for this variant
+        // Using modulo to cycle through users array without repeating
+        const gamePlayers = [];
+        for (let j = 0; j < numPlayers; j++) {
+            const user = users[(i + j) % users.length];
+
+            // Give each player random final points between 0 and buyIn * 3
+            const finalPoints = Math.floor(Math.random() * variant.buyIn * 3);
+
+            gamePlayers.push({
+                userId: user.userId,
+                points: finalPoints,
+                currentBet: 0,
+                abandoned: false,
+                rounds: [],
+                finalPoints
+            });
+        }
+
+        // Winner is the player with the most final points
+        const maxPoints = Math.max(...gamePlayers.map(p => p.finalPoints));
+        const winners = gamePlayers
+            .filter(p => p.finalPoints === maxPoints)
+            .map(p => p.userId);
 
         gameDocs.push(new Game({
-            playerOne: { userId: p1.userId, rounds: [], score: p1Score },
-            playerTwo: { userId: p2.userId, rounds: [], score: p2Score },
+            players: gamePlayers,
             variantId: variant._id,
-            // Determine winner based on scores, null if draw
-            winnerId: p1Score > p2Score ? p1.userId : p2Score > p1Score ? p2.userId : null,
+            pot: 0,
             status: "finished",
-            isAnonymous: false,
+            currentRound: variant.rounds,
+            currentPhase: "reveal",
+            winnerId: winners,
             startedAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
             finishedAt: new Date()
         }));
@@ -36,22 +56,35 @@ async function _seedFinishedGames(users, variants) {
     console.log(`Inserted ${gameDocs.length} finished games`);
 }
 
-// Seeds 3 ongoing games between seeded users
+// Seeds ongoing games with the new players array structure
 async function _seedOngoingGames(users, variants) {
     const gameDocs = [];
 
     for (let i = 0; i < 3; i++) {
-        // Offset by 2 and 3 to avoid same pairings as finished games
-        const p1 = users[(i + 2) % users.length];
-        const p2 = users[(i + 3) % users.length];
         const variant = pick(variants);
+        const numPlayers = variant.numPlayers;
+
+        // Offset by 2 to avoid same pairings as finished games
+        const gamePlayers = [];
+        for (let j = 0; j < numPlayers; j++) {
+            const user = users[(i + j + 2) % users.length];
+
+            gamePlayers.push({
+                userId: user.userId,
+                points: variant.buyIn,
+                currentBet: 0,
+                abandoned: false,
+                rounds: []
+            });
+        }
 
         gameDocs.push(new Game({
-            playerOne: { userId: p1.userId, rounds: [], score: 0 },
-            playerTwo: { userId: p2.userId, rounds: [], score: 0 },
+            players: gamePlayers,
             variantId: variant._id,
+            pot: 0,
             status: "ongoing",
-            isAnonymous: false,
+            currentRound: 1,
+            currentPhase: "rolling",
             startedAt: new Date()
         }));
     }
@@ -60,24 +93,34 @@ async function _seedOngoingGames(users, variants) {
     console.log(`Inserted ${gameDocs.length} ongoing games`);
 }
 
-// Seeds 2 waiting games with only playerOne set, waiting for an opponent
-async function _seedWaitingGames(users, variants) {
+// Seeds room games waiting for players to join
+async function _seedRoomGames(users, variants) {
     const gameDocs = [];
 
-    for (let i = 0; i < 2; i++) {
-        const p1 = users[i % users.length];
+    for (let i = 0; i < 4; i++) {
         const variant = pick(variants);
 
+        // Room games only have one player - the creator
+        const creator = users[i % users.length];
+
         gameDocs.push(new Game({
-            playerOne: { userId: p1.userId, rounds: [], score: 0 },
+            players: [{
+                userId: creator.userId,
+                points: variant.buyIn,
+                currentBet: 0,
+                abandoned: false,
+                rounds: []
+            }],
             variantId: variant._id,
-            status: "waiting",
-            isAnonymous: false
+            pot: 0,
+            status: "room",
+            currentRound: 1,
+            currentPhase: "rolling"
         }));
     }
 
     await Promise.all(gameDocs.map(g => g.save()));
-    console.log(`Inserted ${gameDocs.length} waiting games`);
+    console.log(`Inserted ${gameDocs.length} room games`);
 }
 
 // Clears existing games and seeds new ones
@@ -92,6 +135,6 @@ export async function seedGames() {
 
     await _seedFinishedGames(insertedUsers, insertedVariants);
     await _seedOngoingGames(insertedUsers, insertedVariants);
-    await _seedWaitingGames(insertedUsers, insertedVariants);
+    await _seedRoomGames(insertedUsers, insertedVariants);
     console.log("Added games");
 }

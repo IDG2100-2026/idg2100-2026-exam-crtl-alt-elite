@@ -1,14 +1,20 @@
-// Code copied directly from inclass code from IDG2100 Fullstack 2026
+// No longer a copy from inclass code
+import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { PWD_HASH_KEYLEN } from "../config/constants.js";
 
-import crypto from "node:crypto";
-
-const { APP_SALT: salt } = process.env;
-
+// Hashes a password with a randomly generated salt
+// Returns a string in the format "salt:hash" so both can be stored together
 export function hashPwd(pwd) {
-    const s2hash = pwd + salt;
-    return crypto.createHash("md5").update(s2hash).digest("hex").toString();
+    const salt = randomBytes(16).toString("hex"); // Random salt, unique per password
+    const hash = scryptSync(pwd, salt, PWD_HASH_KEYLEN).toString("hex");
+    return `${salt}:${hash}`;
 }
 
-export function checkPwd(pwd, existingHash) {
-    return hashPwd(pwd) === existingHash;
+// Compares a plain text password against a stored "salt:hash" string
+// Uses timingSafeEqual to prevent timing attacks
+export function checkPwd(pwd, storedHash) {
+    const [salt, hash] = storedHash.split(":");
+    const hashedInput = scryptSync(pwd, salt, PWD_HASH_KEYLEN);
+    const storedBuffer = Buffer.from(hash, "hex");
+    return timingSafeEqual(hashedInput, storedBuffer);
 }

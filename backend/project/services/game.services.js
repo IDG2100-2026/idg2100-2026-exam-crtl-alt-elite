@@ -3,9 +3,6 @@ import { Game } from "../models/game.js";
 
 import {
     ELO_K_FACTOR,
-    ELO_INITIAL_RANGE,
-    ELO_RANGE_INCREMENT,
-    MATCHMAKING_INTERVAL_MS,
     RECENT_GAMES
 } from "../config/constants.js";
 
@@ -21,163 +18,193 @@ export function calculateNewELO(playerElo, opponentElo, actualScore) {
     return Math.round(playerElo + ELO_K_FACTOR * (actualScore - expected));
 }
 
-/* Winner determination helper */
-// Returns the userId of the winner, or null for a draw
-export function determineWinner(playerOneId, playerOneScore, playerTwoId, playerTwoScore) {
-    if (playerOneScore > playerTwoScore) return playerOneId;
-    if (playerTwoScore > playerOneScore) return playerTwoId;
-    return null; // Draw
-}
+/* Multi-player ELO update helper */
+// Adapts the standard two-player ELO algorithm for 2-5 players
+// Each player is compared against every other player as a pair
+// A player "wins" pairings against those with fewer final points
+// A player "loses" pairings against those with more final points
+// A player "draws" pairings against those with equal final points
+export async function updateELORatings(players, gameMongoId) {
+    // Fetch all player documents
+    const userDocs = await Promise.all(
+        players.map(p => User.findOne({ userId: p.userId }))
+    );
 
-/* Recent games update helper */
-// Adds a game to a player's recentGames and keeps only the latest entries
-export async function updateRecentGames(player, gameId) {
-    player.recentGames.unshift(gameId);
-    player.recentGames = player.recentGames.slice(0, RECENT_GAMES);
+    // Filter out any users that no longer exist
+    const validUsers = userDocs.filter(Boolean);
 
-    await User.updateOne(
-        { userId: player.userId },
-        { recentGames: player.recentGames, eloRating: player.eloRating }
+    // Run ELO calculation for each pair of players
+    // Store the ELO deltas seperately to avoid order-dependent results
+    const eloDeltas = new Map(validUsers.map(u => [u.userId, 0]));
+
+    // compares all pairings
+    for (let i = 0; i < validUsers.length; i++) {
+        // Makes sure a player is never compared to themselves
+        for (let j = i + 1; j < validUsers.length; j++) {
+            const userA = validUsers[i];
+            const userB = validUsers[j];
+
+            // Find final points for each player 
+            const playerA = players.find(p => p.userId === userA.userId);
+            const playerB = players.find(p => p.userId === userB.userId);
+
+            // Determine actual scores for this pairing
+            let scoreA, scoreB;
+            if (playerA.finalPoints > playerB.finalPoints) {
+                scoreA = 1;
+                scoreB = 0;
+            } else if (playerA.finalPoints < playerB.finalPoints) {
+                scoreA = 0;
+                scoreB = 1;
+            } else {
+                scoreA = 0.5;
+                scoreB = 0.5;
+            }
+
+            // Calculate new ELO for each player in this pairing
+            const newEloA = calculateNewELO(userA.eloRating, userB.eloRating, scoreA);
+            const newEloB = calculateNewELO(userB.eloRating, userA.eloRating, scoreB);
+
+            // Accumulate the deltas
+            eloDeltas.set(userA.userId, eloDeltas.get(userA.userId) + (newEloA - userA.eloRating));
+            eloDeltas.set(userB.userId, eloDeltas.get(userB.userId) + (newEloB - userB.eloRating));
+        }
+    }
+
+    // Apply all ELO changes and update recent games
+    await Promise.all(
+        validUsers.map(async user => {
+            const delta = eloDeltas.get(user.userId);
+            const newElo = Math.max(0, user.eloRating + delta); // ELO can't go below 0
+
+            // Add game to recent games, keep only the latest entries
+            const recentGames = [gameMongoId, ...user.recentGames].slice(0, RECENT_GAMES);
+
+            await User.updateOne(
+                {
+                    userId: user.userId
+                },
+                {
+                    eloRating: newElo,
+                    recentGames
+                }
+            );
+        })
     );
 }
 
-/* ELO update helper */
-// Fetches both players and updates their ELO ratings after a game
-export async function updateELORatings(playerOneId, playerTwoId, playerOneScore, playerTwoScore, gameId) {
-    const playerOne = await User.findOne({ userId: playerOneId });
-    const playerTwo = await User.findOne({ userId: playerTwoId });
-
-    if (!playerOne || !playerTwo) return;
-
-    // actualScore: 1 = win, 0 = loss, 0.5 = draw
-    const p1Score = playerOneScore > playerTwoScore ? 1 : playerOneScore === playerTwoScore ? 0.5 : 0;
-    const p2Score = 1 - p1Score;
-
-    playerOne.eloRating = calculateNewELO(playerOne.eloRating, playerTwo.eloRating, p1Score);
-    playerTwo.eloRating = calculateNewELO(playerTwo.eloRating, playerOne.eloRating, p2Score);
-
-    // Update recent games for both players
-    await updateRecentGames(playerOne, gameId);
-    await updateRecentGames(playerTwo, gameId);
+/* Return points to profiles helper */
+// After a game ends, each player's remaining stack is returned to their profile
+// Called after the final round is resolved
+export async function returnPointsToProfiles(players) {
+    await Promise.all(
+        players.map(player =>
+            User.updateOne(
+                { userId: player.userId },
+                { $inc: { points: player.finalPoints ?? player.points } }
+            )
+        )
+    );
 }
 
-/* Create game helper */
-// Helps create a game
-export async function createGame({ playerOne, variantId, isAnonymous, status = "waiting", invitedUserId = null }) {
+/* Winner determination helper */
+// Returns the userId of the winner, or null for a draw
+export function determineWinners(players) {
+    const maxPoints = Math.max(...players.map(p => p.finalPoints ?? p.points));
+    return players
+        .filter(p => (p.finalPoints ?? p.points) === maxPoints)
+        .map(p => p.userId);
+}
 
-    // For all kinds of games
-    const newGame = new Game({
-        playerOne,
+/* Create room helper */
+// Creates a new game room with the first player already joined
+export async function createRoom({ variantId, userId, buyIn }) {
+    const game = new Game({
         variantId,
-        isAnonymous,
-        status,
-        invitedUserId
+        players: [{
+            userId,
+            points: buyIn,
+            currentBet: 0,
+            abandoned: false,
+            rounds: []
+        }],
+        pot: 0,
+        status: "room"
     });
-    await newGame.save();
-    return newGame;
+
+    await game.save();
+    return game;
 }
 
-/* Anonymous matchmaking helper */
-// Tries to find a waiting anonymous game, otherwise creates one
-export async function matchmakeAnonymous(variantId) {
-    const waitingGame = await Game.findOne({
-        status: "waiting",
-        isAnonymous: true,
-        variantId
-    });
-
-    if (waitingGame) {
-        // Join the existing anonymous game as playerTwo
-        waitingGame.playerTwo = { userId: null, rounds: [], score: 0 };
-        waitingGame.status = "ongoing";
-        waitingGame.startedAt = new Date();
-        await waitingGame.save();
-        return { matched: true, game: waitingGame };
-    }
-
-    // No match found, create a new waiting anonymous game
-    const newGame = await createGame({
-        playerOne: { userId: null, rounds: [], score: 0 },
-        variantId,
-        isAnonymous: true
-    });
-    return { matched: false, game: newGame };
+/* Roll dice helper */
+// Generates 5 random dice values between 1 and 6
+// Called by the WebSocket handler when a round starts
+// Rolls are generated on the backend, never the frontend
+export function rollDice() {
+    return Array.from(
+        { length: 5 },
+        () => Math.floor(Math.random() * 6) + 1
+    );
 }
 
-/* Registered user matchmaking helper */
-// Tries to find a waiting game within ELO range, otherwise it creates one
-// The longer a player waits, the more relaxed the ELO requirement becomes
-export async function matchmakeRegistered(userId, variantId, eloRating, waitingSince) {
-        const waitingMs = Date.now() - new Date(waitingSince).getTime();
-    const intervals = Math.floor(waitingMs / MATCHMAKING_INTERVAL_MS);
-    const eloRange = ELO_INITIAL_RANGE + intervals * ELO_RANGE_INCREMENT;
+/* Filter rolls helper */
+// Filters out unrevealed rolls from other players
+// Each player can only see their own rolls until the reveal phase
+// Spectators see no rolls until reveal
+export function filterRollsForUser(players, requestingUserId) {
+    return players.map(player => {
+        // The requesting player can always see their own rolls
+        if (player.userId === requestingUserId) return player;
 
-    // Find an opponent whose ELO is within the current range
-    const opponent = await User.findOne({
-        userId: { $ne: userId }, // Not equal, https://www.mongodb.com/docs/manual/reference/operator/query/ne/
-        eloRating: {
-            $gte: eloRating - eloRange, // Greater than or equal, https://www.mongodb.com/docs/manual/reference/operator/aggregation/gte/
-            $lte: eloRating + eloRange // Less than or equal, https://www.mongodb.com/docs/manual/reference/operator/query/lte/ 
-        }
+        // For other players, hide rolls that haven't been revealed yet
+        return {
+            ...player,
+            rounds: player.rounds.map(round => ({
+                ...round,
+                // Hide rolls if not yet revealed
+                rolls: round.revealed ? round.rolls : [],
+                // Hide holds too because they would reveal info about the rolls
+                holds: round.revealed ? round.holds : []
+            }))
+        };
     });
-
-    if (opponent) {
-        // Check if this opponent has a waiting game with the same variant
-        const waitingGame = await Game.findOne({
-            "playerOne.userId": opponent.userId,
-            variantId,
-            status: "waiting",
-            isAnonymous: false
-        });
-
-        if (waitingGame) {
-            waitingGame.playerTwo = { userId, rounds: [], score: 0 };
-            waitingGame.status = "ongoing";
-            waitingGame.startedAt = new Date();
-            await waitingGame.save();
-            return { matched: true, game: waitingGame };
-        }
-    }
-
-    // No match found, create a new waiting game
-    const newGame = await createGame({
-        playerOne: { userId, rounds: [], score: 0 },
-        variantId,
-        isAnonymous: false
-    });
-    return { matched: false, game: newGame };
 }
 
-/* ELO enrichment helper */
-// Enriches a plain game object with ELO ratings and username from the User model
-// Used when returning games from the API so the frontend can display ELO and username
+/* Enrich game with user info helper */
+// Enriches a plain game object with username and ELO from the User model
+// Used when returning games from the API so the frontend can display player info
 export async function enrichGameWithUserInfo(game) {
-    if (game.playerOne?.userId) {
-        const p1 = await User.findOne({ userId: game.playerOne.userId }).select("eloRating username");
-        if (p1) {
-            game.playerOne.eloRating = p1.eloRating;
-            game.playerOne.username = p1.username;
-        }
-    }
+    if (!game.players || game.players.length === 0) return game;
 
-    if (game.playerTwo?.userId) {
-        const p2 = await User.findOne({ userId: game.playerTwo.userId }).select("eloRating username");
-        if (p2) {
-            game.playerTwo.eloRating = p2.eloRating;
-            game.playerTwo.username = p2.username;
-        }
-    }
+    const userIds = game.players.map(p => p.userId).filter(Boolean);
+    const users = await User.find(
+        { userId: { $in: userIds } }, // filter, which documents to find
+        { userId: 1, username: 1, eloRating: 1 } // projection, which fields to return
+    );
+
+    // Build a lookup map for efficiency
+    const userMap = new Map(users.map(u => [u.userId, u]));
+
+    game.players = game.players.map(player => {
+        const user = userMap.get(player.userId);
+        if (!user) return player;
+        return {
+            ...player,
+            username: user.username,
+            eloRating: user.eloRating
+        };
+    });
 
     return game;
 }
 
 export default {
     calculateNewELO,
-    determineWinner,
-    updateRecentGames,
     updateELORatings,
-    createGame,
-    matchmakeAnonymous,
-    matchmakeRegistered,
+    returnPointsToProfiles,
+    determineWinners,
+    createRoom,
+    rollDice,
+    filterRollsForUser,
     enrichGameWithUserInfo
 };

@@ -1,0 +1,159 @@
+/* src/pages/StaticPage.module.css
+Shared styles for About, AboutDice, Terms, Privacy pages */
+
+.page {
+  padding-top: 1.5rem;
+  max-width: 820px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  text-align: left;
+}
+
+.updated {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section {
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  font-size: 1.2rem;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section p {
+  color: var(--color-text);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+/* About Dice page extras */
+.diceRow {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.die {
+  width: 56px;
+  height: 56px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent-2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-accent-2);
+  box-shadow: var(--shadow);
+}
+
+.handList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.handList li {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.handName {
+  color: var(--color-accent);
+}
+
+.variantPoints {
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+  line-height: 2;
+}
+
+.variantTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.variantTable th,
+.variantTable td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.variantTable th {
+  background: var(--color-surface-2);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+}
+
+.variantTable tr:nth-child(even) {
+  background: var(--color-surface-2);
+}
+
+/* About page team grid */
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.memberCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.memberAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.memberCard span {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}

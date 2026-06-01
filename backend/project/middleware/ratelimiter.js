@@ -1,4 +1,5 @@
 import rateLimit from "express-rate-limit";
+import { SecurityIncident } from "../models/securityIncident.js";
 // Rate limiting middleware to prevent API abuse
 // Uses express-rate-limit to limit the number of requests per IP
 // Reference: https://www.npmjs.com/package/express-rate-limit
@@ -10,7 +11,23 @@ export const apiLimiter = rateLimit({
     max: 100, // Max requests per window
     message: { msg: "Too many requests, please try again later" },
     standardHeaders: true, // Sends rate limit info in the RateLimit-* headers
-    legacyHeaders: false // Disables the X-RateLimit-* headers, avoids duplicates
+    legacyHeaders: false, // Disables the X-RateLimit-* headers, avoids duplicates
+    // Called when a request exceeds the rate limit
+    handler: async (req, res) => {
+        try {
+            await SecurityIncident.create({
+                type: "rate_limit",
+                userId: req.user?.userId || null,
+                ip: req.ip,
+                userAgent: req.headers["user-agent"],
+                detail: `Rate limit exceeded on ${req.method} ${req.originalUrl}`
+            });
+        } catch (err) {
+            console.error("Failed to log rate limit incident:", err.message);
+        }
+        // Too many requests
+        res.status(429).json({ msg: "Too many requests, please try again later" });
+    }
 });
 
 // Stricter rate limiter for auth routes, prevents brute force attacks on passwords

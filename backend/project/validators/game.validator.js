@@ -1,107 +1,68 @@
 import { body, param, query } from "express-validator";
-
+import { validatePagination } from "./pagination.validator.js";
 import { MIN_ID } from "../config/constants.js";
 
 // Validates the gameId route parameter
-// Used in getGame and submitGameResult
+// Used in getGame, joinRoom and leaveRoom
 export function validateGameId() {
     return [
         param("id")
             .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("Game ID must be a valid integer")
-            .bail() // stop checking if the above fails
-            .toInt() // Convert to integer for all following checks
+            .bail()
+            .toInt()
     ];
 }
 
-// GET /api/games?status=ongoing&variantId=123&sort=createdAt&order=desc&page=1&limit=20
-// The limit for the pagination can be changed
+// GET /api/games
+// Validates query parameters for getting all games
 export function validateGetGames() {
     return [
-        query("page")
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage("page must be a positive integer")
-            .toInt(),
-        query("limit")
-            .optional()
-            .isInt({ min: 1, max: 100 })
-            .withMessage("limit must be between 1 and 100")
-            .toInt(),
-        // any other filters specific to that resource
+        ...validatePagination(), // Shared pagination validators
+
         query("status")
             .optional()
-            .isIn(["waiting", "ongoing", "finished"])
-            .withMessage("status must be waiting, ongoing or finished")
-    ];
-}
+            .isIn(["room", "ongoing", "finished", "cancelled"])
+            .withMessage("status must be room, ongoing, finished or cancelled"),
 
-// POST /api/games/matchmake
-// Validates the request body for matchmaking
-export function validateMatchmake() {
-    return [
-        body("variantId")
-            .notEmpty()
-            .withMessage("variantId is required")
-            .bail()
-            .isMongoId()
-            .withMessage("variantId must be a valid MongoDB ID"),
-    
-        // waitingSince is optional, only sent when polling for a match
-        body("waitingSince")
+        query("variantId")
             .optional()
-            .isISO8601() // International standard for formatting dates and times
-            .withMessage("waitingSince must be a valid date")
-            .toDate() // Convert to a Date object
-    
-    ];
-}
-
-export function validateInvite() {
-    return [
-        body("variantId")
-            .notEmpty()
-            .withMessage("variantId is required")
-            .bail()
             .isMongoId()
             .withMessage("variantId must be a valid MongoDB ID"),
 
-        body("invitedUserId")
-            .notEmpty()
-            .withMessage("invitedUserId is required")
-            .bail()
-            .isInt({ min: 0 })
-            .withMessage("invitedUserId must be a valid integer")
-            .toInt()
-    ];
-}
-
-// PUT /api/games/:id/result
-// Validates the request body for submitting a game result
-export function validateSubmitGameResult() {
-    return [
-        body("playerOneScore")
-            .notEmpty()
-            .withMessage("playerOneScore is required")
-            .bail()
-            .isInt({ min: 0 })
-            .withMessage("playerOneScore can't be a negative integer")
+        query("userId")
+            .optional()
+            .isInt({ min: MIN_ID })
+            .withMessage("userId must be a valid integer")
             .toInt(),
 
-        body("playerTwoScore")
+        query("sort")
+            .optional()
+            .isIn(["createdAt", "startedAt", "finishedAt"])
+            .withMessage("sort must be createdAt, startedAt or finishedAt"),
+
+        query("order")
+            .optional()
+            .isIn(["asc", "desc"])
+            .withMessage("order must be asc or desc")
+    ];
+}
+
+// POST /api/games
+// Validates the request body for creating a game room
+export function validateCreateRoom() {
+    return [
+        body("variantId")
             .notEmpty()
-            .withMessage("playerTwoScore is required")
+            .withMessage("variantId is required")
             .bail()
-            .isInt({ min: 0 })
-            .withMessage("playerTwoScore can't be a negative integer")
-            .toInt()
+            .isMongoId()
+            .withMessage("variantId must be a valid MongoDB ID")
     ];
 }
 
 export default {
     validateGameId,
     validateGetGames,
-    validateMatchmake,
-    validateInvite,
-    validateSubmitGameResult
+    validateCreateRoom
 };

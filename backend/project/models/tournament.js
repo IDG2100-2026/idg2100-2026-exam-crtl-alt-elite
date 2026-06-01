@@ -33,7 +33,7 @@ const tournamentSchema = new mongoose.Schema({
         maxLength: [MAX_TITLE_LENGTH, `Title can't be longer than ${MAX_TITLE_LENGTH} characters`]
     },
 
-    // Description of the tournament 
+    // Description of the tournament
     description: {
         type: String,
         trim: true,
@@ -61,7 +61,7 @@ const tournamentSchema = new mongoose.Schema({
         required: true
     },
 
-    // Maximum number of player per tournament
+    // Maximum number of players per tournament
     maxPlayers: {
         type: Number,
         enum: [MIN_PLAYERS, LOW_RANGE_PLAYERS, HIGH_RANGE_PLAYERS, MAX_PLAYERS],
@@ -81,13 +81,42 @@ const tournamentSchema = new mongoose.Schema({
         }
     },
 
-    // All matches across all rounds of the tournament
+    // All matches across all tournament rounds
     matches: [matchSchema],
 
-    // Duration of breaks between rounds in minutes
+    // Duration of breaks between tournament rounds in minutes
     breakDuration: {
         type: Number,
         default: 0
+    },
+
+    // Fixed number of tournament rounds
+    // Different from in-game rounds, these are the bracket rounds
+    // e.g. round 1: all players paired, round 2: winners paired, etc.
+    numRounds: {
+        type: Number,
+        required: true,
+        min: [1, "Tournament must have at least 1 round"]
+    },
+
+    // Which tournament round is currently active
+    // null until tournament starts
+    currentRound: {
+        type: Number,
+        default: null
+    },
+
+    // Optional ELO range restrictions
+    // If set, only players within this ELO range can join
+    // Both must be provided together or both omitted
+    eloMin: {
+        type: Number,
+        default: null
+    },
+
+    eloMax: {
+        type: Number,
+        default: null
     },
 
     // When the tournament is scheduled to start
@@ -109,20 +138,33 @@ const tournamentSchema = new mongoose.Schema({
     },
 
     // Status of the tournament
+    // cancelled - admin cancelled it, still visible but can't be joined
     status: {
         type: String,
-        enum: ["upcoming", "ongoing", "finished"],
+        enum: ["upcoming", "ongoing", "finished", "cancelled"],
         default: "upcoming"
     },
 
-    // userId of the tournament winner, null until the tournament is finished
+    // userId of the tournament winner, null until finished
+    // Array to handle draws between multiple players
     winnerId: {
-        type: Number,
-        default: null
+        type: [Number],
+        default: []
+    },
+
+    // Tracks total points accumulated by each player across all tournament games
+    // Used to determine tournament standings and winner
+    // { userId: Number, points: Number }
+    standings: {
+        type: [{
+            userId: { type: Number, required: true },
+            points: { type: Number, default: 0 }
+        }],
+        default: []
     }
 },
 {
-    timestamps: true, 
+    timestamps: true,
     toJSON: {
         transform: (tournamentDoc, tournamentPojo) => {
             delete tournamentPojo._id;
@@ -132,13 +174,28 @@ const tournamentSchema = new mongoose.Schema({
     }
 });
 
-// Modified inclass code from IDG2100 Fullstack 2026
+// Based off inclass code from IDG2100 Fullstack 2026
 tournamentSchema.pre("validate", function() {
-    if(this.isModified("tournamentId") || this.isNew) { 
-        if(this.tournamentId !== undefined) {
+    // Auto-generate tournamentId
+    if (this.isModified("tournamentId") || this.isNew) {
+        if (this.tournamentId !== undefined) {
             console.warn("Tournament IDs are supposed to be auto generated. Discarding the past value", this.tournamentId, ".");
         }
         this.tournamentId = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+    }
+
+    // Validate ELO range
+    const hasMin = this.eloMin !== null && this.eloMin !== undefined;
+    const hasMax = this.eloMax !== null && this.eloMax !== undefined;
+
+    // Validates that eloMin and eloMax are either both set or both omitted
+    if (hasMin !== hasMax) {
+        this.invalidate("eloMin", "eloMin and eloMax must both be set or both omitted");
+    }
+
+    // Validates that eloMin is less than eloMax if both are set
+    if (hasMin && hasMax && this.eloMin >= this.eloMax) {
+        this.invalidate("eloMin", "eloMin must be less than eloMax");
     }
 });
 

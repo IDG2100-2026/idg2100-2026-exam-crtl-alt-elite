@@ -1,0 +1,236 @@
+/* src/pages/ProfilePage.module.css */
+
+.page {
+  padding-top: 1.5rem;
+  max-width: 820px;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  text-align: left;
+}
+
+.profileHeader {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.username {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.email {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.about {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  max-width: 480px;
+  margin-bottom: 0.5rem;
+}
+
+.editForm {
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.editForm h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-accent);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+/* Stats grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statValue {
+  font-family: 'Cinzel', serif;
+  font-size: 1.75rem;
+  color: var(--color-accent-2);
+  font-weight: 700;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+/* Trophies */
+.trophyList {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.trophy {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 110px;
+}
+
+.trophyImg {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.trophyTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-accent-2);
+}
+
+.trophyDate {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Games */
+.gamesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gameLink {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.allGamesLink {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.formGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+.success {
+  color: #27ae60;
+  font-size: 0.9rem;
+}
+
+.gamesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}

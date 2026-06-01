@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth.js";
 import styles from "./Login.module.css";
 
 export default function Login() {
@@ -16,6 +16,9 @@ export default function Login() {
     // If the user was redirected here from a protected page, send them back after login
     const from = location.state?.from?.pathname || "/";
 
+    // Message passed from Register page after successful registration
+    const message = location.state?.message || null;
+
     async function handleSubmit(e) {
         e.preventDefault();
 
@@ -28,27 +31,13 @@ export default function Login() {
         setError(null);
 
         try {
-            const res = await fetch("http://localhost:9000/api/users/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ emailOrUsername: emailOrUsername.trim(), pwd })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                // Use the message from the backend (e.g. "Invalid email/username or password")
-                setError(data.msg || "Login failed.");
-                setSubmitting(false);
-                return;
-            }
-
-            // Store userId and username from the backend response
-            login(data.userId, data.username);
+            // login() in AuthProvider calls authApi.login() and stores the access token
+            await login(emailOrUsername.trim(), pwd);
             navigate(from, { replace: true });
 
-        } catch {
-            setError("Could not connect to the server. Is the backend running?");
+        } catch (err) {
+            // Use the message from the backend (e.g. "Invalid email/username or password")
+            setError(err.message || "Login failed.");
             setSubmitting(false);
         }
     }
@@ -58,6 +47,9 @@ export default function Login() {
             <div className={styles.card}>
                 <h1 className={styles.title}>Log In</h1>
                 <p className={styles.sub}>Welcome back to Spanish Poker Dice.</p>
+
+                {/* Show message from registration redirect */}
+                {message && <p className={styles.message}>{message}</p>}
 
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>

@@ -3,7 +3,7 @@ import { User } from "../../models/user.js";
 import { Game } from "../../models/game.js";
 import { Tournament } from "../../models/tournament.js";
 
-// Seeds comments on finished games¨
+// Seeds comments on finished games
 async function _seedGameComments(users, games) {
     const commentDocs = [];
     const finishedGames = games.filter(game => game.status === "finished");
@@ -11,10 +11,9 @@ async function _seedGameComments(users, games) {
     // Add 2 comments per finished game from different users
     for (let i = 0; i < finishedGames.length; i++) {
         const game = finishedGames[i];
-        const user1 = users[i % users.length]; // user1 is whatever remains of users.length
-        const user2 = users[(i + 1) % users.length]; //  the one before the last remainder
+        const user1 = users[i % users.length];
+        const user2 = users[(i + 1) % users.length];
 
-        // Push the comment into the collection
         commentDocs.push(new Comment({
             userId: user1.userId,
             targetType: "game",
@@ -30,21 +29,34 @@ async function _seedGameComments(users, games) {
         }));
     }
 
-    await Promise.all(commentDocs.map(comments => comments.save()));
+    // Add a soft deleted comment to showcase admin functionality
+    const deletedComment = new Comment({
+        userId: users[0].userId,
+        targetType: "game",
+        targetId: finishedGames[0].gameId,
+        content: "This comment has been removed by an admin.",
+        isDeleted: true
+    });
+    commentDocs.push(deletedComment);
+
+    await Promise.all(commentDocs.map(c => c.save()));
     console.log(`Inserted ${commentDocs.length} game comments`);
 }
 
-// Seeds comments on tournaments 
+// Seeds comments on tournaments
 async function _seedTournamentComments(users, tournaments) {
     const commentDocs = [];
 
-    // Add 2 comment per tournament from different users
+    // Add 2 comments per tournament from different users
     for (let i = 0; i < tournaments.length; i++) {
         const tournament = tournaments[i];
+
+        // Skip cancelled tournaments - no point commenting on them
+        if (tournament.status === "cancelled") continue;
+
         const user1 = users[i % users.length];
         const user2 = users[(i + 1) % users.length];
 
-        // Push into the collection
         commentDocs.push(new Comment({
             userId: user1.userId,
             targetType: "tournament",
@@ -60,7 +72,7 @@ async function _seedTournamentComments(users, tournaments) {
         }));
     }
 
-    await Promise.all(commentDocs.map(comments => comments.save()));
+    await Promise.all(commentDocs.map(c => c.save()));
     console.log(`Inserted ${commentDocs.length} tournament comments`);
 }
 
