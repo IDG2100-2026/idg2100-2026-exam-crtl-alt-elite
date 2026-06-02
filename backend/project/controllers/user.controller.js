@@ -1,4 +1,5 @@
 import { User } from "../models/user.js";
+import { Game } from "../models/game.js";
 import userServices from "../services/user.services.js";
 
 import {
@@ -49,10 +50,29 @@ export async function getUser(req, res, next) {
         }
 
         // Populate recentGames and trophies with full documents
-        await user.populate("recentGames"); // Swap ObjectIds for full game documents
-        await user.populate("trophies.trophyId"); // Swap trophyIds for full trophy documents
+        await user.populate("recentGames");
+        await user.populate("trophies.trophyId");
 
-        res.json(user);
+        // Wins/losses/draws in the last 30 days
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const recentFinished = await Game.find({
+            status: "finished",
+            finishedAt: { $gte: oneMonthAgo },
+            "players.userId": user.userId
+        }, { winnerId: 1 });
+
+        let winsLastMonth = 0, lossesLastMonth = 0, drawsLastMonth = 0;
+        for (const game of recentFinished) {
+            if (game.winnerId.includes(user.userId)) {
+                game.winnerId.length === 1 ? winsLastMonth++ : drawsLastMonth++;
+            } else {
+                lossesLastMonth++;
+            }
+        }
+
+        res.json({ ...user.toJSON(), winsLastMonth, lossesLastMonth, drawsLastMonth });
     } catch(err) {
         next(err);
     }
