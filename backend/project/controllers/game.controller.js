@@ -172,7 +172,7 @@ export async function joinRoom(req, res, next) {
         // Add the player to the game
         game.players.push({
             userId: req.user.userId,
-            points: game.variantId.buyIn,
+            points: game.variantId.buyIn * 10,
             currentBet: 0,
             abandoned: false,
             rounds: []
@@ -208,7 +208,8 @@ export async function joinRoom(req, res, next) {
 // Can only leave a room, not an ongoing game
 export async function leaveRoom(req, res, next) {
     try {
-        const game = await Game.findOne({ gameId: Number(req.validData.id) });
+        const game = await Game.findOne({ gameId: Number(req.validData.id) })
+            .populate("variantId");
 
         if (!game) {
             return res.status(404).json({ msg: "Game was not found" });

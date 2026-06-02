@@ -123,7 +123,7 @@ export async function createRoom({ variantId, userId, buyIn }) {
         variantId,
         players: [{
             userId,
-            points: buyIn,
+            points: buyIn * 10,
             currentBet: 0,
             abandoned: false,
             rounds: []

@@ -59,8 +59,11 @@ export default function GamePage() {
                 const data = await gameApi.getById(id);
                 setGame(data);
                 setError(null);
-                // Stop polling once game has started
-                if (data.status !== 'room') clearInterval(pollRef.current);
+                // Stop polling once game has started or finished
+                if (data.status !== 'room') {
+                    console.log('Stopping poll, game status:', data.status);
+                    clearInterval(pollRef.current);
+                }
             } catch (err) {
                 setError(err.message || 'Failed to load game.');
             } finally {

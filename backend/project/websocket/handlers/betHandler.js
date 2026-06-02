@@ -77,13 +77,16 @@ export async function handleBet(io, socket, gameId, action, amount) {
                     action: "fold"
                 });
                 await game.save();
+
+                // Include player points so frontend stays in sync
                 io.to(`game:${gameId}`).emit("bet_update", {
                     userId: socket.user.userId,
                     action: "fold",
                     amount: 0,
                     pot: game.pot,
                     roundNumber: game.currentRound,
-                    forcedFold: true
+                    forcedFold: true,
+                    players: game.players.map(p => ({ userId: p.userId, points: p.points }))
                 });
 
                 // Check if betting is complete after forced fold
@@ -126,12 +129,14 @@ export async function handleBet(io, socket, gameId, action, amount) {
     await game.save();
 
     // Broadcast the bet to all players
+    // Include updated player points so frontend stays in sync and avoids drift
     io.to(`game:${gameId}`).emit("bet_update", {
         userId: socket.user.userId,
         action,
         amount: action === "fold" ? 0 : amount,
         pot: game.pot,
-        roundNumber: game.currentRound
+        roundNumber: game.currentRound,
+        players: game.players.map(p => ({ userId: p.userId, points: p.points }))
     });
 
     // Recalculate highest bet after the action since a raise may have changed it

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getSocket } from '../../api/socket.js';
 import '../Dice/dice-poker-die.js';
@@ -24,7 +24,13 @@ export default function GameBoard({ game }) {
     const gameId = game.gameId;
     const myUserId = user?.userId;
     const isPlayer = game.players?.some(p => p.userId === myUserId);
-    const isPlayerFinal = isPlayer;
+
+    // Ref to always have the latest myUserId inside socket handlers
+    // Prevents stale closure problem where handlers capture undefined userId
+    const myUserIdRef = useRef(myUserId);
+    useEffect(() => {
+        myUserIdRef.current = myUserId;
+    }, [myUserId]);
 
     // Turn / rolling state
     const [myRolls, setMyRolls] = useState([]);
@@ -54,8 +60,6 @@ export default function GameBoard({ game }) {
     const [highestBet, setHighestBet] = useState(0);
     const [myFolded, setMyFolded] = useState(false);
 
-    // isPlayerFinal: check both the initial game prop AND current userId (handles auth loading delay)
-    const isPlayerFinalFinal = isPlayerFinal || (myUserId && game.players?.some(p => p.userId === myUserId));
     const isMyTurn = currentTurnUserId === myUserId && phase === 'rolling';
     const canRoll = isMyTurn && rollsUsed < ROLLS_PER_TURN;
     const canEndTurn = isMyTurn && rollsUsed >= 1;
@@ -79,6 +83,8 @@ export default function GameBoard({ game }) {
     }, [socket, gameId]);
 
     // Socket event listeners
+    // myUserId is NOT in the dependency array - we use myUserIdRef instead
+    // to avoid stale closures when user loads after component mounts
     useEffect(() => {
         if (!socket) return;
 
@@ -88,14 +94,15 @@ export default function GameBoard({ game }) {
             setPot(data.pot || 0);
             setCurrentTurnUserId(data.currentTurnUserId || null);
             setRollsUsed(data.rollsUsed || 0);
-            const me = data.players?.find(p => p.userId === myUserId);
+            // Use ref to get latest userId
+            const me = data.players?.find(p => p.userId === myUserIdRef.current);
             if (me) {
                 setMyPoints(me.points);
                 setMyCurrentBet(me.currentBet || 0);
             }
         }
 
-        function onRollResult({ roundNumber, rolls, holds, rollsUsed: used, rollsTotal }) {
+        function onRollResult({ roundNumber, rolls, holds, rollsUsed: used }) {
             setRoundNumber(roundNumber);
             setMyRolls(rolls);
             setMyHolds(holds || []);
@@ -110,8 +117,9 @@ export default function GameBoard({ game }) {
 
         function onTurnUpdate({ currentTurnUserId: tid, rollsUsed: used, roundNumber: rn, expiresAt }) {
             // If the turn just moved away from me, lock my current dice
+            // Use ref to get latest userId to avoid stale closure
             setCurrentTurnUserId(prev => {
-                if (prev === myUserId && tid !== myUserId) {
+                if (prev === myUserIdRef.current && tid !== myUserIdRef.current) {
                     setMyRolls(currentDice => {
                         if (currentDice.length > 0) setMyLockedRolls(currentDice);
                         return [];
@@ -124,7 +132,7 @@ export default function GameBoard({ game }) {
             if (expiresAt) setTurnExpiresAt(expiresAt);
         }
 
-        function onRoundStart({ roundNumber: rn, currentTurnUserId: tid, expiresAt }) {
+        function onRoundStart({ roundNumber: rn, currentTurnUserId: tid, expiresAt, players }) {
             setRoundNumber(rn);
             setCurrentTurnUserId(tid);
             setRollsUsed(0);
@@ -139,6 +147,13 @@ export default function GameBoard({ game }) {
             setMyCurrentBet(0);
             setHighestBet(0);
             if (expiresAt) setTurnExpiresAt(expiresAt);
+
+            // Sync points from backend to avoid frontend drift
+            // Use ref to get latest userId
+            if (players) {
+                const me = players.find(p => p.userId === myUserIdRef.current);
+                if (me) setMyPoints(me.points);
+            }
         }
 
         function onPhaseChange({ phase: p }) {
@@ -158,17 +173,17 @@ export default function GameBoard({ game }) {
             setPot(newPot);
             setBetActions(prev => [...prev, { userId, action, amount }]);
             setHighestBet(prev => Math.max(prev, amount || 0));
-            if (userId === myUserId) {
+            if (userId === myUserIdRef.current) {
                 if (action === 'fold') setMyFolded(true);
                 else {
                     setMyCurrentBet(amount);
-                    setMyPoints(p => p - (amount || 0));
                 }
             }
         }
 
         function onRoundEnd({ roundNumber: rn, reveal, roundWinners: winners, pot: split }) {
             setPhase('reveal');
+            setRoundNumber(rn);
             setRevealData(reveal);
             setRoundWinners(winners);
             setPot(split);
@@ -208,7 +223,7 @@ export default function GameBoard({ game }) {
             socket.off('round_end', onRoundEnd);
             socket.off('game_end', onGameEnd);
         };
-    }, [socket, myUserId]);
+    }, [socket]); // myUserId removed - handled via ref
 
     function toggleHold(index) {
         if (!isMyTurn || rollsUsed === 0) return;
@@ -265,7 +280,6 @@ export default function GameBoard({ game }) {
     }
 
     const opponentName = currentTurnUserId ? getUsername(currentTurnUserId) : null;
-    const iHaveRolled = myLockedRolls.length > 0 || (phase === 'rolling' && myRolls.length > 0 && !isMyTurn);
 
     return (
         <div className={styles.board}>
@@ -274,11 +288,14 @@ export default function GameBoard({ game }) {
                 <div className={styles.socketError}>{socketError}</div>
             )}
 
-            {/* Header: round, pot, phase */}
+            {/* Header: round, pot, phase, my points */}
             <div className={styles.info}>
                 <span>Round {roundNumber}</span>
                 <span>Pot: {pot} pts</span>
                 <span className={styles.phase}>{phase}</span>
+                {isPlayer && (
+                    <span className={styles.myPoints}>Your stack: {myPoints} pts</span>
+                )}
             </div>
 
             {/* Rolling phase */}
@@ -308,7 +325,7 @@ export default function GameBoard({ game }) {
                         )}
                     </div>
 
-                    {/* My dice — always shown during rolling phase */}
+                    {/* My dice — shown when it is my turn */}
                     {isMyTurn && (
                         <div className={styles.mySection}>
                             <p className={styles.sectionLabel}>
@@ -341,7 +358,7 @@ export default function GameBoard({ game }) {
                     )}
 
                     {/* Waiting player — show placeholder dice if not rolled yet, locked dice if done */}
-                    {!isMyTurn && isPlayerFinal && (
+                    {!isMyTurn && isPlayer && (
                         <div className={styles.mySection}>
                             <p className={styles.sectionLabel}>
                                 {myLockedRolls.length > 0 ? 'Your dice (locked in)' : 'Your dice'}
@@ -364,7 +381,7 @@ export default function GameBoard({ game }) {
             {/* Betting phase — show own dice but not opponents' */}
             {phase === 'betting' && (
                 <>
-                    {isPlayerFinal && myLockedRolls.length > 0 && (
+                    {isPlayer && myLockedRolls.length > 0 && (
                         <div className={styles.mySection}>
                             <p className={styles.sectionLabel}>Your dice</p>
                             <div className={styles.dice}>
@@ -375,7 +392,7 @@ export default function GameBoard({ game }) {
                         </div>
                     )}
 
-                    {isPlayerFinal && !myFolded && (
+                    {isPlayer && !myFolded && (
                         <div className={styles.betting}>
                             <p className={styles.sectionLabel}>
                                 Pot: <strong>{pot} pts</strong> · Your bet: <strong>{myCurrentBet} pts</strong> · To match: <strong>{Math.max(0, highestBet - myCurrentBet)} pts</strong>
@@ -433,7 +450,7 @@ export default function GameBoard({ game }) {
                 </div>
             )}
 
-            {!isPlayerFinal && <p className={styles.spectator}>You are spectating this game.</p>}
+            {!isPlayer && <p className={styles.spectator}>You are spectating this game.</p>}
         </div>
     );
 }
