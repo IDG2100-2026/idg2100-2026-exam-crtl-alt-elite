@@ -165,6 +165,9 @@ export const userApi = {
     ban: (targetId) =>
         apiPut(`/users/${targetId}/ban`, {}),
 
+    unban: (targetId) =>
+        apiPut(`/users/${targetId}/unban`, {}),
+
     makeAdmin: (targetId) =>
         apiPut(`/users/${targetId}/role`, {}),
 
