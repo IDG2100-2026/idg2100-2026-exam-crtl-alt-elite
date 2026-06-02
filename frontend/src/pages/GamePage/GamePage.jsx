@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { gameApi, commentApi } from "../../api/api.js";
 import { getSocket } from "../../api/socket.js";
 import { useSettings } from '@/context/SettingsContext';
-import GameBoard from '@/components/Dice/GameBoard';
+import GameBoard from '@/components/Game/GameBoard';
 import '@/components/Dice/dice-poker-monitor.js';
 import styles from './GamePage.module.css';
 
