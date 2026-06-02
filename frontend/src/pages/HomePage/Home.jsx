@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Link } from "react-router";
 import GameCard from "@/components/GameCard/GameCard";
 import { useSettings } from "@/context/SettingsContext";
+import { activityApi } from "@/api/api.js";
 import Styles from "./Home.module.css";
 import mainImg from "@/assets/mainPokerDice-bk.png";
 
@@ -12,6 +13,7 @@ export default function Home() {
 
     const [lobbyGames, setLobbyGames] = useState([]);
     const [topGames, setTopGames] = useState([]);
+    const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -28,6 +30,9 @@ export default function Home() {
                 const ongoingRes = await fetch("http://localhost:9000/api/games?status=ongoing&limit=5");
                 const ongoingData = await ongoingRes.json();
                 setTopGames(ongoingData.games ?? []);
+
+                const activityData = await activityApi.get();
+                setActivity(activityData);
             } catch {
                 setError("Failed to load games. Is the backend running?");
             } finally {
@@ -91,6 +96,30 @@ export default function Home() {
                     </div>
                 )}
             </section>
+
+            {/* Platform activity */}
+            {activity && (
+                <section className={Styles.activitySection}>
+                    <div className={Styles.sectionHeader}>
+                        <h2>Platform Activity</h2>
+                    </div>
+                    <p className={Styles.sectionSubtitle}>What's happening on the platform</p>
+                    <div className={Styles.activityStats}>
+                        <div className={Styles.activityCard}>
+                            <span className={Styles.activityNum}>{activity.ongoingGames}</span>
+                            <span className={Styles.activityLabel}>Games live now</span>
+                        </div>
+                        <div className={Styles.activityCard}>
+                            <span className={Styles.activityNum}>{activity.activeUsersThisWeek}</span>
+                            <span className={Styles.activityLabel}>Active players this week</span>
+                        </div>
+                        <div className={Styles.activityCard}>
+                            <span className={Styles.activityNum}>{activity.lastGames?.length ?? 0}</span>
+                            <span className={Styles.activityLabel}>Recently finished games</span>
+                        </div>
+                    </div>
+                </section>
+            )}
 
         </div>
     );

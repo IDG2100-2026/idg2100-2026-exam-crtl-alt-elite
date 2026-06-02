@@ -28,12 +28,14 @@ import CreateGame from './pages/CreateGame/CreateGame.jsx';
 import TournamentListPage from './pages/Tournament/TournamentList/TournamentList.jsx';
 import TournamentPage from './pages/Tournament/TournamentPage/TournamentPage.jsx';
 
-// Admin pages - uncomment when created
-// import AdminLayout from './layouts/AdminLayout.jsx';
-// import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
-// import AdminUsers from './pages/Admin/AdminUsers.jsx';
-// import AdminComments from './pages/Admin/AdminComments.jsx';
-// import AdminTournamentCreate from './pages/Admin/AdminTournamentCreate.jsx';
+// Leaderboard
+import LeaderboardPage from './pages/Leaderboard/LeaderboardPage.jsx';
+
+// Admin pages
+import AdminLayout from './layouts/AdminLayout.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
+import AdminUsers from './pages/Admin/AdminUsers.jsx';
+import AdminComments from './pages/Admin/AdminComments.jsx';
 
 function AppRoutes() {
     const { loading } = useAuth();
@@ -62,19 +64,17 @@ function AppRoutes() {
           {/* Tournament routes. uncomment when created */}
           <Route path="tournaments" element={<TournamentListPage />} />
           <Route path="tournaments/:id" element={<TournamentPage />} />
+          <Route path="leaderboard" element={<LeaderboardPage />} />
 
           {/* Profile routes */}
           <Route path="profile/:id" element={<ProfilePage />} />
         </Route>
 
-        {/* Admin routes. uncomment when created */}
-        {/* <Route element={<AdminLayout />}>
+        <Route element={<AdminLayout />}>
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="admin/users" element={<AdminUsers />} />
           <Route path="admin/comments" element={<AdminComments />} />
-          <Route path="admin/tournaments/create" element={<AdminTournamentCreate />} />
-          <Route path="admin/tournaments/:id/edit" element={<AdminTournamentCreate />} />
-        </Route> */}
+        </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
