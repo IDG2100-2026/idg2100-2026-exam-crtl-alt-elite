@@ -6,16 +6,18 @@ import styles from './GameBoard.module.css';
 
 const ROLLS_PER_TURN = 3;
 
+const FACE_RANK = { "7": 1, "8": 2, "J": 3, "Q": 4, "K": 5, "A": 6 };
+
 function handName(dice) {
     if (!dice || dice.length !== 5) return '?';
     const counts = {};
     for (const d of dice) counts[d] = (counts[d] || 0) + 1;
     const vals = Object.values(counts).sort((a, b) => b - a);
-    const sorted = [...dice].sort((a, b) => a - b);
+    const sorted = [...dice].sort((a, b) => FACE_RANK[a] - FACE_RANK[b]);
     if (vals[0] === 5) return 'Five of a kind';
     if (vals[0] === 4) return 'Four of a kind';
     if (vals[0] === 3 && vals[1] === 2) return 'Full house';
-    if (sorted.every((v, i) => i === 0 || v === sorted[i - 1] + 1)) return 'Straight';
+    if (sorted.every((v, i) => i === 0 || FACE_RANK[v] === FACE_RANK[sorted[i - 1]] + 1)) return 'Straight';
     if (vals[0] === 3) return 'Three of a kind';
     if (vals[0] === 2 && vals[1] === 2) return 'Two pair';
     if (vals[0] === 2) return 'One pair';
@@ -25,7 +27,7 @@ function handName(dice) {
 function Die({ face, held, disabled, onClick }) {
     return (
         <dice-poker-die
-            face={face || '1'}
+            face={face || '7'}
             {...(held ? { held: '' } : {})}
             {...(disabled ? { disabled: '' } : {})}
             onClick={disabled ? undefined : onClick}
@@ -56,6 +58,7 @@ export default function GameBoard({ game }) {
     const [rollsUsed, setRollsUsed] = useState(game.rollsUsed || 0);
     const [turnExpiresAt, setTurnExpiresAt] = useState(null);
     const [secondsLeft, setSecondsLeft] = useState(0);
+    const [otherHolds, setOtherHolds] = useState({});
 
     // Round / game state
     const [phase, setPhase] = useState(game.currentPhase || 'rolling');
@@ -185,6 +188,7 @@ export default function GameBoard({ game }) {
             setMyFolded(false);
             setMyCurrentBet(0);
             setHighestBet(0);
+            setOtherHolds({});
             if (expiresAt) setTurnExpiresAt(expiresAt);
 
             // Sync points from backend to avoid frontend drift
@@ -209,6 +213,12 @@ export default function GameBoard({ game }) {
                     if (current.length > 0) setMyLockedRolls(current);
                     return [];
                 });
+            }
+        }
+
+        function onHoldsUpdate({ userId, holds }) {
+            if (userId !== myUserId) {
+                setOtherHolds(prev => ({ ...prev, [userId]: holds }));
             }
         }
 
@@ -271,6 +281,7 @@ export default function GameBoard({ game }) {
         socket.on('turn_update', onTurnUpdate);
         socket.on('round_start', onRoundStart);
         socket.on('phase_change', onPhaseChange);
+        socket.on('holds_update', onHoldsUpdate);
         socket.on('bet_update', onBetUpdate);
         socket.on('round_end', onRoundEnd);
         socket.on('game_end', onGameEnd);
@@ -283,6 +294,7 @@ export default function GameBoard({ game }) {
             socket.off('turn_update', onTurnUpdate);
             socket.off('round_start', onRoundStart);
             socket.off('phase_change', onPhaseChange);
+            socket.off('holds_update', onHoldsUpdate);
             socket.off('bet_update', onBetUpdate);
             socket.off('round_end', onRoundEnd);
             socket.off('game_end', onGameEnd);
@@ -291,9 +303,11 @@ export default function GameBoard({ game }) {
 
     function toggleHold(index) {
         if (!isMyTurn || rollsUsed === 0) return;
-        setMyHolds(prev =>
-            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-        );
+        const newHolds = myHolds.includes(index)
+            ? myHolds.filter(i => i !== index)
+            : [...myHolds, index];
+        setMyHolds(newHolds);
+        socket.emit('hold_dice', { gameId, holds: newHolds });
     }
 
     function roll() {
@@ -389,7 +403,7 @@ export default function GameBoard({ game }) {
                                 {myRolls.length > 0 ? 'Click dice to hold' : 'Your dice'}
                             </p>
                             <div className={styles.dice}>
-                                {(myRolls.length > 0 ? myRolls : [7, 7, 7, 7, 7]).map((face, i) => (
+                                {(myRolls.length > 0 ? myRolls : ["7", "7", "7", "7", "7"]).map((face, i) => (
                                     <Die
                                         key={i}
                                         face={face}
@@ -416,7 +430,7 @@ export default function GameBoard({ game }) {
                                 {myLockedRolls.length > 0 ? 'Your dice (locked in)' : 'Your dice'}
                             </p>
                             <div className={styles.dice}>
-                                {(myLockedRolls.length > 0 ? myLockedRolls : [7, 7, 7, 7, 7]).map((face, i) => (
+                                {(myLockedRolls.length > 0 ? myLockedRolls : ["7", "7", "7", "7", "7"]).map((face, i) => (
                                     <Die
                                         key={i}
                                         face={face}
@@ -425,6 +439,17 @@ export default function GameBoard({ game }) {
                                     />
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Other players' hold counts — shown to waiting players */}
+                    {Object.keys(otherHolds).length > 0 && (
+                        <div className={styles.othersSection}>
+                            {Object.entries(otherHolds).map(([uid, holds]) => (
+                                <p key={uid} className={styles.otherHold}>
+                                    {getUsername(Number(uid))} is holding {holds.length} dice
+                                </p>
+                            ))}
                         </div>
                     )}
                 </>

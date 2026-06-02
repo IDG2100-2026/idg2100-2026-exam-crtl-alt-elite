@@ -120,6 +120,7 @@
 .winner { font-size: 1.2rem; font-weight: 700; color: #7fbb98; margin-bottom: 1rem; }
 
 .finalScores { display: flex; flex-direction: column; gap: 0.4rem; max-width: 300px; margin: 0 auto; }
+
 .finalScore {
   display: flex;
   justify-content: space-between;
