@@ -3,11 +3,13 @@ import { useNavigate, Link } from "react-router";
 import { useAuth } from "../../hooks/useAuth.js";
 import { gameApi } from "../../api/api.js";
 import GameCard from "@/components/GameCard/GameCard";
+import LoginPrompt from "@/components/LoginPrompt/LoginPrompt";
 import styles from "./LobbyPage.module.css";
 
 export default function LobbyPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -96,12 +98,21 @@ export default function LobbyPage() {
                                 game={game}
                                 index={index}
                                 showJoin
-                                onJoin={g => navigate(`/games/${g.gameId}`)}
+                                onJoin={g => {
+                                    if (!user) { setShowLoginPrompt(true); return; }
+                                    navigate(`/games/${g.gameId}`);
+                                }}
                             />
                         ))}
                     </div>
                 )
             )}
+        {showLoginPrompt && (
+            <LoginPrompt
+                message="You need to be logged in to join a game."
+                onClose={() => setShowLoginPrompt(false)}
+            />
+        )}
         </div>
     );
 }
