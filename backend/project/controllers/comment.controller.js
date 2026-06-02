@@ -76,11 +76,23 @@ export async function getRecentComments(req, res, next) {
 
         const total = await Comment.countDocuments({});
 
+        const userIds = [...new Set(comments.map(c => c.userId))];
+        const users = await User.find(
+            { userId: { $in: userIds } },
+            { userId: 1, username: 1 }
+        );
+        const userMap = new Map(users.map(u => [u.userId, u]));
+
+        const enrichedComments = comments.map(c => ({
+            ...c.toObject(),
+            username: userMap.get(c.userId)?.username ?? "Anonymous"
+        }));
+
         res.json({
             total,
             page: Number(page),
             totalPages: Math.ceil(total / limit),
-            comments
+            comments: enrichedComments
         });
     } catch (err) {
         next(err);

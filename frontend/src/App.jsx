@@ -4,6 +4,7 @@ import { AuthProvider } from './providers/AuthProvider.jsx';
 import { SettingsProvider } from './context/SettingsContext.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import MainLayout from './layouts/MainLayout.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 // Static pages
 import AboutPage from './pages/StaticPages/AboutPage.jsx';
@@ -28,12 +29,14 @@ import CreateGame from './pages/CreateGame/CreateGame.jsx';
 import TournamentListPage from './pages/Tournament/TournamentList/TournamentList.jsx';
 import TournamentPage from './pages/Tournament/TournamentPage/TournamentPage.jsx';
 
-// Admin pages - uncomment when created
-// import AdminLayout from './layouts/AdminLayout.jsx';
-// import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
-// import AdminUsers from './pages/Admin/AdminUsers.jsx';
-// import AdminComments from './pages/Admin/AdminComments.jsx';
-// import AdminTournamentCreate from './pages/Admin/AdminTournamentCreate.jsx';
+// Leaderboard
+import LeaderboardPage from './pages/Leaderboard/LeaderboardPage.jsx';
+
+// Admin pages
+import AdminLayout from './layouts/AdminLayout.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
+import AdminUsers from './pages/Admin/AdminUsers.jsx';
+import AdminComments from './pages/Admin/AdminComments.jsx';
 
 function AppRoutes() {
     const { loading } = useAuth();
@@ -53,28 +56,29 @@ function AppRoutes() {
           <Route path="terms" element={<TermsPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 
-          {/* Game routes */}
-          
-          <Route path="createGame" element={<CreateGame />} />
+          {/* Public game routes */}
           <Route path="lobby" element={<LobbyPage />} />
-          <Route path="games/:id" element={<GamePage />} />
-
-          {/* Tournament routes. uncomment when created */}
+          <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="tournaments" element={<TournamentListPage />} />
-          <Route path="tournaments/:id" element={<TournamentPage />} />
+
+          {/* Protected routes — must be logged in */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="createGame" element={<CreateGame />} />
+            <Route path="games/:id" element={<GamePage />} />
+            <Route path="tournaments/:id" element={<TournamentPage />} />
+          </Route>
 
           {/* Profile routes */}
           <Route path="profile/:id" element={<ProfilePage />} />
         </Route>
 
-        {/* Admin routes. uncomment when created */}
-        {/* <Route element={<AdminLayout />}>
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="admin/users" element={<AdminUsers />} />
-          <Route path="admin/comments" element={<AdminComments />} />
-          <Route path="admin/tournaments/create" element={<AdminTournamentCreate />} />
-          <Route path="admin/tournaments/:id/edit" element={<AdminTournamentCreate />} />
-        </Route> */}
+        <Route element={<ProtectedRoute requireAdmin />}>
+          <Route element={<AdminLayout />}>
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="admin/users" element={<AdminUsers />} />
+            <Route path="admin/comments" element={<AdminComments />} />
+          </Route>
+        </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />

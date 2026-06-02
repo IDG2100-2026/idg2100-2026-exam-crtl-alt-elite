@@ -1,18 +1,27 @@
-// import { Navigate, Outlet } from "react-router";
-// import { useContext } from "react";
-// import { AuthContext } from "../context/AuthContext";
+import { Outlet, useLocation, useNavigate, Navigate } from "react-router";
+import { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth.js";
 
-// export default function ProtectedRoute({ requireAdmin = false }){
-// 	const { user } = useContext(AuthContext);
+export default function ProtectedRoute({ requireAdmin = false }) {
+    const { user } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
 
-//     // not logged in send to login
-//     if (!user) {
-//         return <Navigate to="/login" replace />;
-//     }
+    useEffect(() => {
+        if (!user) {
+            navigate('/', {
+                state: { loginModal: true, from: location },
+                replace: true,
+                preventScrollReset: true,
+            });
+        }
+    }, [user]);
 
-//     if (requireAdmin && !user.isAdmin) {
-//         return <Navigate to="/" replace />;
-//     }
+    if (!user) return null;
 
-//     return <Outlet />;
-// }
+    if (requireAdmin && user.role !== 'admin') {
+        return <Navigate to="/" replace />;
+    }
+
+    return <Outlet />;
+}
