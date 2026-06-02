@@ -210,10 +210,6 @@ export default function ProfilePage() {
                         <span className={styles.statLabel}>Elo Rating</span>
                     </div>
                     <div className={styles.statCard}>
-                        <span className={styles.statValue}>{user.recentGames?.length ?? 0}</span>
-                        <span className={styles.statLabel}>Recent Games</span>
-                    </div>
-                    <div className={styles.statCard}>
                         <span className={`${styles.statValue} ${eloChange > 0 ? styles.positive : eloChange < 0 ? styles.negative : ''}`}>
                             {eloChange != null ? (eloChange > 0 ? `+${eloChange}` : eloChange) : '-'}
                         </span>
@@ -229,6 +225,25 @@ export default function ProfilePage() {
                             <span className={styles.statLabel}>Points</span>
                         </div>
                     )}
+                </div>
+            </section>
+
+            {/* Last 30 days */}
+            <section className={styles.section}>
+                <h2>Last 30 days</h2>
+                <div className={styles.statsGrid}>
+                    <div className={styles.statCard}>
+                        <span className={`${styles.statValue} ${styles.positive}`}>{user.winsLastMonth ?? 0}</span>
+                        <span className={styles.statLabel}>Wins</span>
+                    </div>
+                    <div className={styles.statCard}>
+                        <span className={`${styles.statValue} ${styles.negative}`}>{user.lossesLastMonth ?? 0}</span>
+                        <span className={styles.statLabel}>Losses</span>
+                    </div>
+                    <div className={styles.statCard}>
+                        <span className={styles.statValue}>{user.drawsLastMonth ?? 0}</span>
+                        <span className={styles.statLabel}>Draws</span>
+                    </div>
                 </div>
             </section>
 
