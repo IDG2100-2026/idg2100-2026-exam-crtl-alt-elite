@@ -154,6 +154,24 @@ export async function banUser(req, res, next) {
     }
 }
 
+// PUT /api/users/:id/unban
+// Admin only, lifts a ban from a user
+export async function unbanUser(req, res, next) {
+    try {
+        const user = await userServices.findUserById(req.validData.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+
+        await User.updateOne({ userId: user.userId }, { isBanned: false });
+
+        res.json({ msg: `User ${user.username} has been unbanned` });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // PUT /api/users/:id/role
 // Admin only, promotes a user to admin
 export async function makeAdmin(req, res, next) {
@@ -184,5 +202,6 @@ export default {
     updateUser,
     uploadAvatar,
     banUser,
+    unbanUser,
     makeAdmin
 };
