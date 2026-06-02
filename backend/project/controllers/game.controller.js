@@ -2,6 +2,8 @@ import { Game } from "../models/game.js";
 import { GameVariant } from "../models/gameVariant.js";
 import { User } from "../models/user.js";
 import gameServices from "../services/game.services.js";
+import { getIO } from "../websocket/socket.js";
+import { handleRoll } from "../websocket/handlers/rollHandler.js";
 
 import {
     PAGE,
@@ -177,7 +179,8 @@ export async function joinRoom(req, res, next) {
         });
 
         // Start the game automatically if the room is now full
-        if (game.players.length === game.variantId.numPlayers) {
+        const gameStarting = game.players.length === game.variantId.numPlayers;
+        if (gameStarting) {
             game.status = "ongoing";
             game.startedAt = new Date();
         }
@@ -185,9 +188,16 @@ export async function joinRoom(req, res, next) {
         await game.save();
 
         res.json({
-            msg: game.status === "ongoing" ? "Game is starting!" : "Joined game room",
+            msg: gameStarting ? "Game is starting!" : "Joined game room",
             game
         });
+
+        // Trigger first round after response is sent
+        if (gameStarting) {
+            const io = getIO();
+            const freshGame = await Game.findOne({ gameId: game.gameId }).populate("variantId");
+            await handleRoll(io, freshGame);
+        }
     } catch (err) {
         next(err);
     }

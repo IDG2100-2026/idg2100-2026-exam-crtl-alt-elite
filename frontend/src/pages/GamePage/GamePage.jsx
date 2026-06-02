@@ -49,6 +49,8 @@ export default function GamePage() {
     const [comment, setComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [commentErr, setCommentErr] = useState(null);
+    const [joining, setJoining] = useState(false);
+    const [joinErr, setJoinErr] = useState(null);
     const pollRef = useRef(null);
 
     useEffect(() => {
@@ -106,6 +108,20 @@ export default function GamePage() {
             socket.off('comment_deleted');
         };
     }, [id]);
+
+    async function joinGame() {
+        setJoining(true);
+        setJoinErr(null);
+        try {
+            await gameApi.joinRoom(id);
+            const data = await gameApi.getById(id);
+            setGame(data);
+        } catch (err) {
+            setJoinErr(err.message || 'Failed to join game.');
+        } finally {
+            setJoining(false);
+        }
+    }
 
     async function handleCommentSubmit(e) {
         e.preventDefault();
@@ -175,17 +191,36 @@ export default function GamePage() {
                     </div>
 
                     <div className={styles.board} style={{ background: boardColor }}>
-                        {game.status === 'room' && (
-                            <div className={styles.waitingOverlay}>
-                                <div className={styles.waitingBox}>
-                                    <p>Waiting for players to join...</p>
-                                    <p className={styles.pollNote}>
-                                        {game.players?.length}/{variant?.numPlayers} players joined
-                                    </p>
-                                    <p className={styles.pollNote}>Page refreshes automatically every 15 seconds.</p>
+                        {game.status === 'room' && (() => {
+                            const alreadyIn = game.players?.some(p => p.userId === user?.userId);
+                            const isFull = game.players?.length >= variant?.numPlayers;
+                            return (
+                                <div className={styles.waitingOverlay}>
+                                    <div className={styles.waitingBox}>
+                                        <p>{alreadyIn ? 'Waiting for other players...' : 'Join this game?'}</p>
+                                        <p className={styles.pollNote}>
+                                            {game.players?.length}/{variant?.numPlayers} players joined
+                                        </p>
+                                        {!alreadyIn && !isFull && user && (
+                                            <>
+                                                <button
+                                                    className="button button-secondary"
+                                                    onClick={joinGame}
+                                                    disabled={joining}
+                                                    style={{ marginTop: '1rem' }}
+                                                >
+                                                    {joining ? 'Joining...' : `Join (${variant?.buyIn} pt buy-in)`}
+                                                </button>
+                                                {joinErr && <p style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.85rem' }}>{joinErr}</p>}
+                                            </>
+                                        )}
+                                        {alreadyIn && (
+                                            <p className={styles.pollNote}>Page refreshes automatically every 15 seconds.</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
                         {game.status === 'ongoing' && (
                             <GameBoard game={game} />
                         )}
