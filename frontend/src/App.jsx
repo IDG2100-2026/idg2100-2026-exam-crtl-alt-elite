@@ -4,6 +4,7 @@ import { AuthProvider } from './providers/AuthProvider.jsx';
 import { SettingsProvider } from './context/SettingsContext.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import MainLayout from './layouts/MainLayout.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 // Static pages
 import AboutPage from './pages/StaticPages/AboutPage.jsx';
@@ -55,25 +56,28 @@ function AppRoutes() {
           <Route path="terms" element={<TermsPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 
-          {/* Game routes */}
-          
-          <Route path="createGame" element={<CreateGame />} />
+          {/* Public game routes */}
           <Route path="lobby" element={<LobbyPage />} />
-          <Route path="games/:id" element={<GamePage />} />
-
-          {/* Tournament routes. uncomment when created */}
-          <Route path="tournaments" element={<TournamentListPage />} />
-          <Route path="tournaments/:id" element={<TournamentPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
+          <Route path="tournaments" element={<TournamentListPage />} />
+
+          {/* Protected routes — must be logged in */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="createGame" element={<CreateGame />} />
+            <Route path="games/:id" element={<GamePage />} />
+            <Route path="tournaments/:id" element={<TournamentPage />} />
+          </Route>
 
           {/* Profile routes */}
           <Route path="profile/:id" element={<ProfilePage />} />
         </Route>
 
-        <Route element={<AdminLayout />}>
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="admin/users" element={<AdminUsers />} />
-          <Route path="admin/comments" element={<AdminComments />} />
+        <Route element={<ProtectedRoute requireAdmin />}>
+          <Route element={<AdminLayout />}>
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="admin/users" element={<AdminUsers />} />
+            <Route path="admin/comments" element={<AdminComments />} />
+          </Route>
         </Route>
 
         {/* 404 */}
