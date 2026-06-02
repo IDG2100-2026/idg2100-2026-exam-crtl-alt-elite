@@ -1,5 +1,5 @@
 // Reused on code from Nora Storro (Fullstack assignment 3)
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useFetch } from "../../hooks/useFetch.js";
 import { gameApi, variantApi } from "../../api/api.js";
@@ -31,6 +31,16 @@ export default function CreateGame() {
     const timeOptions = [...new Set(variants?.map(v => v.timeControl) ?? [])].sort((a, b) => a - b);
     const numPlayersOptions = [...new Set(variants?.map(v => v.numPlayers) ?? [])].sort((a, b) => a - b);
     const buyInOptions = [...new Set(variants?.map(v => v.buyIn) ?? [])].sort((a, b) => a - b);
+
+    // Set defaults once variants load
+    useEffect(() => {
+        if (!variants?.length) return;
+        setSelectedRounds(r => r ?? roundOptions[0]);
+        setSelectedStraights(s => s ?? true);
+        setSelectedTime(t => t ?? timeOptions[0]);
+        setSelectedNumPlayers(n => n ?? numPlayersOptions[0]);
+        setSelectedBuyIn(b => b ?? buyInOptions[0]);
+    }, [variants]);
 
     // Find the variant that matches all selected options
     // Memoized to avoid recalculating on every render
