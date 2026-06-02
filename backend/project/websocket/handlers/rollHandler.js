@@ -47,8 +47,9 @@ export async function doRoll(io, game, holds) {
         newRolls = rollDice();
     } else {
         // Re-roll: keep held dice, randomise the rest
+        const POKER_FACES = ["7", "8", "J", "Q", "K", "A"];
         newRolls = currentRound.rolls.map((val, i) =>
-            holds.includes(i) ? val : Math.floor(Math.random() * 6) + 1
+            holds.includes(i) ? val : POKER_FACES[Math.floor(Math.random() * POKER_FACES.length)]
         );
     }
 

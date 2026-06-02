@@ -137,13 +137,15 @@ export async function createRoom({ variantId, userId, buyIn }) {
 }
 
 /* Roll dice helper */
-// Generates 5 random dice values between 1 and 6
+// Generates 5 random poker dice faces: 7, 8, J, Q, K, A
 // Called by the WebSocket handler when a round starts
 // Rolls are generated on the backend, never the frontend
+const POKER_FACES = ["7", "8", "J", "Q", "K", "A"];
+
 export function rollDice() {
     return Array.from(
         { length: 5 },
-        () => Math.floor(Math.random() * 6) + 1
+        () => POKER_FACES[Math.floor(Math.random() * POKER_FACES.length)]
     );
 }
 

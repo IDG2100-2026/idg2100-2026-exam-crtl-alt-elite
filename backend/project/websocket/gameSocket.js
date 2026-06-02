@@ -82,6 +82,21 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
+    // Player updates which dice they are holding — broadcast count to others
+    // Values are never revealed, only positions are shared (spec line 73)
+    socket.on("hold_dice", async ({ gameId, holds }) => {
+        try {
+            if (socket.isSpectator || !socket.user?.userId) return;
+            const validHolds = (holds || []).filter(i => i >= 0 && i <= 4);
+            socket.to(`game:${gameId}`).emit("holds_update", {
+                userId: socket.user.userId,
+                holds: validHolds
+            });
+        } catch (err) {
+            console.error("hold_dice error:", err.message);
+        }
+    });
+
     // Player sends a bet action during the betting phase
     socket.on("place_bet", async ({ gameId, action, amount }) => {
         try {

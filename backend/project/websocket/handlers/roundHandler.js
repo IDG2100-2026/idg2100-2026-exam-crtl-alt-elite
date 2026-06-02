@@ -158,6 +158,9 @@ async function handleGameEnd(io, game) {
 export function evaluateHand(dice, straightsAllowed = true) {
     if (!dice || dice.length !== 5) return 0;
 
+    // Map poker faces to numeric rank: 7→1, 8→2, J→3, Q→4, K→5, A→6
+    const FACE_RANK = { "7": 1, "8": 2, "J": 3, "Q": 4, "K": 5, "A": 6 };
+
     // Count occurrences of each die value
     const counts = {};
     for (const die of dice) {
@@ -165,42 +168,34 @@ export function evaluateHand(dice, straightsAllowed = true) {
     }
 
     const values = Object.values(counts).sort((a, b) => b - a);
-    const sorted = [...dice].sort((a, b) => a - b);
+    const sorted = [...dice].sort((a, b) => FACE_RANK[a] - FACE_RANK[b]);
 
-    // Hand type score (0-7) shifted up to leave room for tiebreaker
-    // Multiply by 1000 so tiebreaker values (max ~776) never overlap hand types
     let handScore;
 
-    // Five of a kind
-    if (values[0] === 5) handScore = 7;
-    // Four of a kind
-    else if (values[0] === 4) handScore = 6;
-    // Full house (three of a kind + pair)
-    if (values[0] === 3 && values[1] === 2) return 5;
-
-    // Straight (1-2-3-4-5 or 2-3-4-5-6) — only when variant allows it
-    if (straightsAllowed) {
-        const isStraight = sorted.every((val, i) =>
-            i === 0 || val === sorted[i - 1] + 1
-        );
-        if (isStraight) return 4;
+    if (values[0] === 5) {
+        handScore = 7;
+    } else if (values[0] === 4) {
+        handScore = 6;
+    } else if (values[0] === 3 && values[1] === 2) {
+        handScore = 5;
+    } else if (straightsAllowed && sorted.every((val, i) => i === 0 || FACE_RANK[val] === FACE_RANK[sorted[i - 1]] + 1)) {
+        handScore = 4;
+    } else if (values[0] === 3) {
+        handScore = 3;
+    } else if (values[0] === 2 && values[1] === 2) {
+        handScore = 2;
+    } else if (values[0] === 2) {
+        handScore = 1;
+    } else {
+        handScore = 0;
     }
 
-    // Three of a kind
-    else if (values[0] === 3) handScore = 3;
-    // Two pair
-    else if (values[0] === 2 && values[1] === 2) handScore = 2;
-    // One pair
-    else if (values[0] === 2) handScore = 1;
-    // High card
-    else handScore = 0;
-
-    // Tiebreaker: encode dice values sorted by frequency then by face value
-    // e.g. pair of 6s + 5,3,1 beats pair of 5s + 6,4,2
+    // Tiebreaker: sort by count desc then rank desc so higher-ranked pairs beat lower-ranked ones
+    // e.g. pair of Aces beats pair of 7s
     const tiebreaker = Object.entries(counts)
-        .map(([face, count]) => ({ face: Number(face), count }))
-        .sort((a, b) => b.count - a.count || b.face - a.face) // sort by count desc, then face desc
-        .reduce((acc, { face }, i) => acc + face * Math.pow(10, (4 - i)), 0);
+        .map(([face, count]) => ({ rank: FACE_RANK[face] || 0, count }))
+        .sort((a, b) => b.count - a.count || b.rank - a.rank)
+        .reduce((acc, { rank }, i) => acc + rank * Math.pow(10, (4 - i)), 0);
 
     return handScore * 1000000 + tiebreaker;
 }
