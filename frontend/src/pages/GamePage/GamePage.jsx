@@ -162,7 +162,7 @@ export default function GamePage() {
 
     const variant = game.variantId;
     const variantLabel = variant
-        ? `Best of ${variant.rounds} · ${variant.timeControl}s total · Straights ${variant.straightsAllowed ? 'on' : 'off'} · ${variant.numPlayers} players · ${variant.buyIn} pt buy-in`
+        ? `Best of ${variant.rounds} · ${variant.timeControl}s per turn · Straights ${variant.straightsAllowed ? 'on' : 'off'} · ${variant.numPlayers} players · ${variant.buyIn} pt buy-in`
         : 'Unknown variant';
 
     return (

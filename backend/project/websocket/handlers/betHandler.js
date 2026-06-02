@@ -104,6 +104,7 @@ export async function handleBet(io, socket, gameId, action, amount) {
             player.points -= matchAmount;
             player.currentBet = highestBet;
             game.pot += matchAmount;
+            amount = matchAmount;
             break;
         }
         

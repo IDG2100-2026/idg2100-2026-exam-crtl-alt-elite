@@ -57,8 +57,10 @@ export default function GameBoard({ game }) {
     // isPlayerFinal: check both the initial game prop AND current userId (handles auth loading delay)
     const isPlayerFinalFinal = isPlayerFinal || (myUserId && game.players?.some(p => p.userId === myUserId));
     const isMyTurn = currentTurnUserId === myUserId && phase === 'rolling';
-    const canRoll = isMyTurn && rollsUsed < ROLLS_PER_TURN;
-    const canEndTurn = isMyTurn && rollsUsed >= 1;
+    // Only count rolls when it's actually my turn — ignore rollsUsed from other players' turns
+    const myRollsUsed = isMyTurn ? rollsUsed : 0;
+    const canRoll = isMyTurn && myRollsUsed < ROLLS_PER_TURN;
+    const canEndTurn = isMyTurn && myRollsUsed >= 1;
 
     // Countdown timer
     useEffect(() => {
@@ -289,7 +291,7 @@ export default function GameBoard({ game }) {
                         {isMyTurn ? (
                             <>
                                 <span className={styles.yourTurn}>Your turn</span>
-                                <span className={styles.rollCount}>Roll {rollsUsed} of {ROLLS_PER_TURN}</span>
+                                <span className={styles.rollCount}>Roll {myRollsUsed} of {ROLLS_PER_TURN}</span>
                                 {turnExpiresAt && (
                                     <span className={`${styles.countdown} ${secondsLeft <= 5 ? styles.urgent : ''}`}>
                                         {secondsLeft}s
@@ -302,7 +304,7 @@ export default function GameBoard({ game }) {
                                     {opponentName ? `${opponentName} is rolling` : 'Waiting...'}
                                 </span>
                                 {rollsUsed > 0 && (
-                                    <span className={styles.rollCount}>Roll {rollsUsed} of {ROLLS_PER_TURN}</span>
+                                    <span className={styles.rollCount}>Roll {myRollsUsed} of {ROLLS_PER_TURN}</span>
                                 )}
                             </>
                         )}
@@ -328,7 +330,7 @@ export default function GameBoard({ game }) {
                             <div className={styles.rollActions}>
                                 {canRoll && (
                                     <button className={styles.btnRollAgain} onClick={roll}>
-                                        {rollsUsed === 0 ? 'Roll Dice' : `Roll Again (${ROLLS_PER_TURN - rollsUsed} left)`}
+                                        {myRollsUsed === 0 ? 'Roll Dice' : `Roll Again (${ROLLS_PER_TURN - myRollsUsed} left)`}
                                     </button>
                                 )}
                                 {canEndTurn && (
