@@ -1,10 +1,27 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getSocket } from '../../api/socket.js';
 import '../Dice/dice-poker-die.js';
 import styles from './GameBoard.module.css';
 
 const ROLLS_PER_TURN = 3;
+
+function handName(dice) {
+    if (!dice || dice.length !== 5) return '?';
+    const counts = {};
+    for (const d of dice) counts[d] = (counts[d] || 0) + 1;
+    const vals = Object.values(counts).sort((a, b) => b - a);
+    const sorted = [...dice].sort((a, b) => a - b);
+    if (vals[0] === 5) return 'Five of a kind';
+    if (vals[0] === 4) return 'Four of a kind';
+    if (vals[0] === 3 && vals[1] === 2) return 'Full house';
+    if (sorted.every((v, i) => i === 0 || v === sorted[i - 1] + 1)) return 'Straight';
+    if (vals[0] === 3) return 'Three of a kind';
+    if (vals[0] === 2 && vals[1] === 2) return 'Two pair';
+    if (vals[0] === 2) return 'One pair';
+    return 'High card';
+}
 
 function Die({ face, held, disabled, onClick }) {
     return (
@@ -60,9 +77,13 @@ export default function GameBoard({ game }) {
     const [highestBet, setHighestBet] = useState(0);
     const [myFolded, setMyFolded] = useState(false);
 
+    // Round wins tracked for the monitor (doesn't trigger re-renders)
+    const roundWinsRef = useRef({ player1: 0, player2: 0 });
+
     const isMyTurn = currentTurnUserId === myUserId && phase === 'rolling';
-    const canRoll = isMyTurn && rollsUsed < ROLLS_PER_TURN;
-    const canEndTurn = isMyTurn && rollsUsed >= 1;
+    // Only count rolls when it's actually my turn — ignore rollsUsed from other players' turns
+    const myRollsUsed = isMyTurn ? rollsUsed : 0;
+    const canRoll = isMyTurn && myRollsUsed < ROLLS_PER_TURN;
 
     // Countdown timer
     useEffect(() => {
@@ -100,6 +121,15 @@ export default function GameBoard({ game }) {
                 setMyPoints(me.points);
                 setMyCurrentBet(me.currentBet || 0);
             }
+            // Seed the monitor with current game state on join/reconnect
+            if (data.currentRound > 0) {
+                document.dispatchEvent(new CustomEvent('dp:round-start', { detail: { round: data.currentRound } }));
+                if (data.currentTurnUserId) {
+                    const tidx = data.players?.findIndex(p => p.userId === data.currentTurnUserId);
+                    const tkey = tidx === 0 ? 'player1' : 'player2';
+                    document.dispatchEvent(new CustomEvent('dp:turn-changed', { detail: { player: tkey, remainingRolls: ROLLS_PER_TURN - (data.rollsUsed || 0) } }));
+                }
+            }
         }
 
         function onRollResult({ roundNumber, rolls, holds, rollsUsed: used }) {
@@ -107,6 +137,10 @@ export default function GameBoard({ game }) {
             setMyRolls(rolls);
             setMyHolds(holds || []);
             setRollsUsed(used);
+            const myIdx = game.players?.findIndex(p => p.userId === myUserId);
+            const myKey = myIdx === 0 ? 'player1' : 'player2';
+            const heldBools = Array.from({ length: 5 }, (_, i) => (holds || []).includes(i));
+            document.dispatchEvent(new CustomEvent('dp:roll-executed', { detail: { player: myKey, faces: rolls, held: heldBools } }));
         }
 
         function onMyRollsLocked({ rolls, holds }) {
@@ -129,7 +163,13 @@ export default function GameBoard({ game }) {
             });
             setRollsUsed(used);
             setRoundNumber(rn);
-            if (expiresAt) setTurnExpiresAt(expiresAt);
+            // Only update the countdown when it's my turn — prevents re-renders on waiting player
+            if (expiresAt && tid === myUserId) setTurnExpiresAt(expiresAt);
+            if (tid) {
+                const tidx = game.players?.findIndex(p => p.userId === tid);
+                const tkey = tidx === 0 ? 'player1' : 'player2';
+                document.dispatchEvent(new CustomEvent('dp:turn-changed', { detail: { player: tkey, remainingRolls: ROLLS_PER_TURN - used } }));
+            }
         }
 
         function onRoundStart({ roundNumber: rn, currentTurnUserId: tid, expiresAt, players }) {
@@ -154,6 +194,10 @@ export default function GameBoard({ game }) {
                 const me = players.find(p => p.userId === myUserIdRef.current);
                 if (me) setMyPoints(me.points);
             }
+            document.dispatchEvent(new CustomEvent('dp:round-start', { detail: { round: rn } }));
+            const tidx = game.players?.findIndex(p => p.userId === tid);
+            const tkey = tidx === 0 ? 'player1' : 'player2';
+            document.dispatchEvent(new CustomEvent('dp:turn-changed', { detail: { player: tkey, remainingRolls: ROLLS_PER_TURN } }));
         }
 
         function onPhaseChange({ phase: p }) {
@@ -187,12 +231,33 @@ export default function GameBoard({ game }) {
             setRevealData(reveal);
             setRoundWinners(winners);
             setPot(split);
+            // Update round wins and dispatch to monitor
+            const wins = roundWinsRef.current;
+            for (const uid of winners) {
+                const idx = game.players?.findIndex(p => p.userId === uid);
+                const key = idx === 0 ? 'player1' : 'player2';
+                if (key) wins[key] = (wins[key] || 0) + 1;
+            }
+            const hands = {};
+            for (const p of reveal || []) {
+                const idx = game.players?.findIndex(pl => pl.userId === p.userId);
+                const key = idx === 0 ? 'player1' : 'player2';
+                if (key && p.rolls?.length > 0) hands[key] = { handType: p.folded ? 'Folded' : handName(p.rolls) };
+            }
+            const winKey = (() => { const i = game.players?.findIndex(p => p.userId === winners[0]); return i === 0 ? 'player1' : 'player2'; })();
+            document.dispatchEvent(new CustomEvent('dp:round-decided', { detail: { winner: winKey, hands } }));
+            document.dispatchEvent(new CustomEvent('dp:turn-changed', { detail: { player: '', remainingRolls: 0 } }));
         }
 
         function onGameEnd({ winnerId, players }) {
             setGameOver(true);
             setGameResult({ winnerId, players });
             setPhase('finished');
+            const idx = game.players?.findIndex(p => p.userId === winnerId[0]);
+            const champKey = idx === 0 ? 'player1' : 'player2';
+            document.dispatchEvent(new CustomEvent('dp:match-decided', {
+                detail: { champion: champKey, scoreline: { ...roundWinsRef.current } }
+            }));
         }
 
         function onError({ msg }) {
@@ -235,13 +300,6 @@ export default function GameBoard({ game }) {
     function roll() {
         if (!canRoll) return;
         socket.emit('roll_dice', { gameId, holds: myHolds });
-    }
-
-    function handleEndTurn() {
-        if (!canEndTurn) return;
-        socket.emit('end_turn', { gameId });
-        setMyLockedRolls(myRolls);
-        setMyRolls([]);
     }
 
     function placeBet(action) {
@@ -306,7 +364,7 @@ export default function GameBoard({ game }) {
                         {isMyTurn ? (
                             <>
                                 <span className={styles.yourTurn}>Your turn</span>
-                                <span className={styles.rollCount}>Roll {rollsUsed} of {ROLLS_PER_TURN}</span>
+                                <span className={styles.rollCount}>Roll {myRollsUsed} of {ROLLS_PER_TURN}</span>
                                 {turnExpiresAt && (
                                     <span className={`${styles.countdown} ${secondsLeft <= 5 ? styles.urgent : ''}`}>
                                         {secondsLeft}s
@@ -345,12 +403,7 @@ export default function GameBoard({ game }) {
                             <div className={styles.rollActions}>
                                 {canRoll && (
                                     <button className={styles.btnRollAgain} onClick={roll}>
-                                        {rollsUsed === 0 ? 'Roll Dice' : `Roll Again (${ROLLS_PER_TURN - rollsUsed} left)`}
-                                    </button>
-                                )}
-                                {canEndTurn && (
-                                    <button className={styles.btnDone} onClick={handleEndTurn}>
-                                        Done
+                                        {myRollsUsed === 0 ? 'Roll Dice' : `Roll Again (${ROLLS_PER_TURN - myRollsUsed} left)`}
                                     </button>
                                 )}
                             </div>

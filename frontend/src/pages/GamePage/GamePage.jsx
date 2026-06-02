@@ -164,36 +164,42 @@ export default function GamePage() {
     const p1Elo = p1?.eloRating || '-';
 
     const variant = game.variantId;
-    const variantLabel = variant
-        ? `Best of ${variant.rounds} · ${variant.timeControl}s total · Straights ${variant.straightsAllowed ? 'on' : 'off'} · ${variant.numPlayers} players · ${variant.buyIn} pt buy-in`
-        : 'Unknown variant';
 
     return (
         <div className={styles.page}>
 
             <div className={styles.gameHeader}>
                 <h1>{p0Name} <span className={styles.vs}>vs</span> {p1Name}</h1>
-                <p className={styles.variant}>{variantLabel}</p>
                 <span className={`${styles.statusBadge} ${styles[game.status]}`}>{game.status}</span>
+                {variant && (
+                    <div className={styles.variantChips}>
+                        <span className={styles.chip}>Best of {variant.rounds}</span>
+                        <span className={styles.chip}>{variant.timeControl}s per turn</span>
+                        <span className={`${styles.chip} ${variant.straightsAllowed ? styles.chipOn : styles.chipOff}`}>
+                            Straights {variant.straightsAllowed ? 'on' : 'off'}
+                        </span>
+                        <span className={styles.chip}>{variant.numPlayers} players</span>
+                        <span className={styles.chip}>{variant.buyIn} pt buy-in</span>
+                    </div>
+                )}
             </div>
 
             <div className={styles.layout}>
 
                 {/* Game board */}
                 <div className={styles.boardArea}>
-                    <div className={styles.players}>
-                        <div className={styles.playerCard}>
-                            <span className={styles.playerName}>{p0Name}</span>
-                            <span className={styles.playerElo}>Elo {p0Elo}</span>
-                        </div>
-                        <span className={styles.vsSmall}>vs</span>
-                        <div className={styles.playerCard}>
-                            <span className={styles.playerName}>{p1Name}</span>
-                            <span className={styles.playerElo}>Elo {p1Elo}</span>
-                        </div>
-                    </div>
-
                     <div className={styles.board} style={{ background: boardColor }}>
+                        <div className={styles.players}>
+                            <div className={styles.playerCard}>
+                                <span className={styles.playerName}>{p0Name}</span>
+                                <span className={styles.playerElo}>Elo {p0Elo}</span>
+                            </div>
+                            <span className={styles.vsSmall}>vs</span>
+                            <div className={styles.playerCard}>
+                                <span className={styles.playerName}>{p1Name}</span>
+                                <span className={styles.playerElo}>Elo {p1Elo}</span>
+                            </div>
+                        </div>
                         {game.status === 'room' && (() => {
                             const alreadyIn = game.players?.some(p => p.userId === user?.userId);
                             const isFull = game.players?.length >= variant?.numPlayers;
@@ -231,7 +237,9 @@ export default function GamePage() {
                             <div className={styles.placeholderMsg}>
                                 Game finished
                                 {game.winnerId?.length > 0 && (
-                                    <p>Winner: {game.winnerId.join(', ')}</p>
+                                    <p>Winner: {game.winnerId.map(id =>
+                                        game.players?.find(p => p.userId === id)?.username || `Player ${id}`
+                                    ).join(', ')}</p>
                                 )}
                             </div>
                         )}

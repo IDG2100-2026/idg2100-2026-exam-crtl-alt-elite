@@ -104,7 +104,7 @@ function determineRoundWinners(game) {
         const round = player.rounds.find(r => r.roundNumber === game.currentRound);
         return {
             userId: player.userId,
-            score: evaluateHand(round?.rolls || [])
+            score: evaluateHand(round?.rolls || [], game.variantId?.straightsAllowed ?? true)
         };
     });
 
@@ -154,8 +154,8 @@ async function handleGameEnd(io, game) {
 // Higher score = better hand
 // Hand rankings (high to low):
 // Five of a kind, Four of a kind, Full house,
-// Straight, Three of a kind, Two pair, One pair, High card
-export function evaluateHand(dice) {
+// Straight (if allowed), Three of a kind, Two pair, One pair, High card
+export function evaluateHand(dice, straightsAllowed = true) {
     if (!dice || dice.length !== 5) return 0;
 
     // Count occurrences of each die value
@@ -176,9 +176,16 @@ export function evaluateHand(dice) {
     // Four of a kind
     else if (values[0] === 4) handScore = 6;
     // Full house (three of a kind + pair)
-    else if (values[0] === 3 && values[1] === 2) handScore = 5;
-    // Straight (1-2-3-4-5 or 2-3-4-5-6)
-    else if (sorted.every((val, i) => i === 0 || val === sorted[i - 1] + 1)) handScore = 4;
+    if (values[0] === 3 && values[1] === 2) return 5;
+
+    // Straight (1-2-3-4-5 or 2-3-4-5-6) — only when variant allows it
+    if (straightsAllowed) {
+        const isStraight = sorted.every((val, i) =>
+            i === 0 || val === sorted[i - 1] + 1
+        );
+        if (isStraight) return 4;
+    }
+
     // Three of a kind
     else if (values[0] === 3) handScore = 3;
     // Two pair

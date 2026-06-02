@@ -70,9 +70,6 @@ export async function doRoll(io, game, holds) {
     game.markModified("players");
     await game.save();
 
-    const timeMs = (game.variantId?.timeControl || 30) * 1000;
-    const expiresAt = Date.now() + timeMs;
-
     // Send dice only to the current player
     const sockets = await io.in(`game:${game.gameId}`).fetchSockets();
     const playerSocket = sockets.find(s => s.user?.userId === game.currentTurnUserId);
@@ -86,7 +83,10 @@ export async function doRoll(io, game, holds) {
         });
     }
 
-    // Broadcast turn state to everyone (no dice values)
+    const timeMs = (game.variantId?.timeControl || 30) * 1000;
+    const expiresAt = Date.now() + timeMs;
+
+    // Broadcast roll count to everyone (no dice values)
     io.to(`game:${game.gameId}`).emit("turn_update", {
         currentTurnUserId: game.currentTurnUserId,
         rollsUsed: game.rollsUsed,
@@ -96,7 +96,7 @@ export async function doRoll(io, game, holds) {
     });
 
     if (game.rollsUsed >= ROLLS_PER_TURN) {
-        // All 3 rolls used — auto-end turn after a pause so player can see their final dice
+        // All 3 rolls used — auto-end after a short pause
         clearTurnTimer(game.gameId);
         setTimeout(() => endTurn(io, game.gameId), 2500);
     } else {
