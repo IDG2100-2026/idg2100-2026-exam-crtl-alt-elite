@@ -9,37 +9,46 @@
   text-align: left;
 }
 
+/* ANON NOTE */
 .anonNote {
-  background: color-mix(in srgb, var(--color-accent-2) 15%, transparent);
-  border: 1px solid var(--color-accent-2);
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-accent-2) 12%, var(--color-surface));
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 10px;
   padding: 0.75rem 1rem;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
 }
 
+/* FILTER BAR */
 .filters {
   display: flex;
   gap: 1.5rem;
   align-items: flex-end;
   flex-wrap: wrap;
+
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.75rem;
+
+  box-shadow: var(--shadow);
 }
 
+/* FORM GROUP */
 .filters .form-group {
   margin-bottom: 0;
 }
 
+/* GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
 }
 
+/* EMPTY STATE */
 .empty {
   text-align: center;
   padding: 3rem;

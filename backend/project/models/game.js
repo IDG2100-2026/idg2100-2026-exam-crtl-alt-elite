@@ -76,6 +76,20 @@ const gameSchema = new mongoose.Schema({
         default: "rolling"
     },
 
+    // userId of the player whose rolling turn it currently is
+    // null when not in rolling phase
+    currentTurnUserId: {
+        type: Number,
+        default: null
+    },
+
+    // How many rolls the current player has used this turn (max 3)
+    rollsUsed: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+
     // userId of the winner, null until the game is finished
     // Array to handle draws between multiple players
     winnerId: {

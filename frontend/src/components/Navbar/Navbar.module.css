@@ -26,6 +26,8 @@
 }
 
 .nav-element {
+  border-radius: 2px;
+  
   padding: 6px 12px;
   color: var(--cream-text);
   text-decoration: none;

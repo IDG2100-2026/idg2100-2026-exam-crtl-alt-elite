@@ -128,8 +128,11 @@ export const authApi = {
         apiPost("/auth/register", userData),
 
     login: async (credentials) => {
-        const data = await apiPost("/auth/login", credentials);
-        // Store the access token in memory after login
+        // retry=true skips the refresh-on-401 logic — a 401 here means wrong credentials
+        const data = await apiFetch("/auth/login", {
+            method: "POST",
+            body: JSON.stringify(credentials)
+        }, true);
         if (data.accessToken) {
             accessToken = data.accessToken;
         }

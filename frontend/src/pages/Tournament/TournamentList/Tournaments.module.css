@@ -7,6 +7,7 @@
   gap: 1.5rem;
 }
 
+/* CONTROLS */
 .controls {
   display: flex;
   gap: 1rem;
@@ -17,20 +18,24 @@
   background: #c3c3c3;
 }
 
-
+/* INPUT */
 .searchInput {
   flex: 1;
   min-width: 220px;
   padding: 0.7rem 0.9rem;
   border-radius: 10px;
   border: 1px solid transparent;
-  background: #2a2a3a;
-  color: white;
+  background: rgb(226, 224, 224);
+  color: rgb(37, 37, 37);
   outline: none;
   transition: 0.2s;
 }
- 
 
+.searchInput:focus {
+  border: 1px solid rgb(38, 38, 62);
+}
+
+/* SELECT */
 .sortSelect {
   padding: 0.6rem 0.8rem;
   border-radius: 10px;
@@ -38,23 +43,12 @@
   color: black;
   background-color: rgb(226, 224, 224);
 }
- 
 
 /* SECTIONS */
 .section {
   display: flex;
   flex-direction: column;
-  border: none;
   gap: 1rem;
-}
-
-.searchInput {
- background-color: rgb(226, 224, 224);
- color: rgb(37, 37, 37);
-}
-
-.searchInput:focus {
-    border: 1px solid rgb(38, 38, 62);
 }
 
 .sectionTitle {
@@ -63,9 +57,44 @@
   margin-bottom: 0.5rem;
 }
 
+/* GRID (RESPONSIVE CORE FIX) */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
 
 
-.cardGrid{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+/* Tablet */
+@media (max-width: 900px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .tournamentListPage {
+    padding: 1rem 0.75rem;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 400px) {
+  .sectionTitle {
+    font-size: 1rem;
+  }
+
+  .controls {
+    padding: 0.75rem;
+  }
 }
