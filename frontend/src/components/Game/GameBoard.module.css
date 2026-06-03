@@ -101,6 +101,15 @@
   margin: 0.25rem 0 0;
 }
 
+.socketError {
+  background: rgba(248, 113, 113, 0.15);
+  border: 1px solid #f87171;
+  color: #f87171;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
 .betLogItem {
   font-size: 0.8rem;
   opacity: 0.7;
@@ -171,3 +180,82 @@
   font-size: 0.9rem;
   padding: 1rem;
 }
+
+.turnBanner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255,255,255,0.07);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.yourTurn {
+  font-weight: 700;
+  color: #7fbb98;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+.waitingTurn {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.rollCount {
+  opacity: 0.6;
+  font-size: 0.8rem;
+}
+
+.countdown {
+  margin-left: auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #7fbb98;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.countdown.urgent {
+  color: #f87171;
+}
+
+.rollActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btnRollAgain {
+  padding: 0.5rem 1.1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: #2d7a52;
+  color: white;
+  transition: opacity 0.15s;
+}
+
+.btnRollAgain:hover { opacity: 0.85; }
+
+.btnDone {
+  padding: 0.5rem 1.1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  transition: opacity 0.15s;
+}
+
+.btnDone:hover { opacity: 0.75; }
+
+.lockedIn { opacity: 0.5; cursor: default; }

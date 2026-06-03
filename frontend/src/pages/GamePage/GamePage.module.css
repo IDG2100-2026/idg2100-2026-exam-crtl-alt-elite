@@ -1,42 +1,95 @@
 /* src/pages/GamePage.module.css */
 
 .page {
-  padding: 1.5rem 1.5rem 0;
+  padding: 1.5rem 6rem 2rem;
 }
 
+@media (max-width: 900px) {
+  .page {
+    padding: 1.5rem 1.5rem 2rem;
+  }
+}
+
+/* Header */
+
 .gameHeader {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .gameHeader h1 {
   font-size: 1.75rem;
+  letter-spacing: -0.01em;
 }
 
 .vs {
   color: var(--color-text-muted);
   font-weight: 400;
-  margin: 0 0.5rem;
+  margin: 0 0.4rem;
+}
+
+.gameId {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: 0.85rem;
 }
 
 .variant {
   color: var(--color-text-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  margin-left: auto;
+}
+
+.variantChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.chip {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.3rem 0.9rem;
+  border-radius: 20px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e5e5);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.chipOn {
+  background: #d1e7dd;
+  border-color: #a3cfbb;
+  color: #0f5132;
+}
+
+.chipOff {
+  background: #f8d7da;
+  border-color: #f1aeb5;
+  color: #842029;
 }
 
 .statusBadge {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.2rem 0.6rem;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.9rem;
   border-radius: 20px;
+  white-space: nowrap;
 }
 
-.waiting {
+.waiting, .room {
   background: #fff3cd;
   color: #856404;
 }
@@ -51,11 +104,21 @@
   color: #842029;
 }
 
+.cancelled {
+  background: #e2e3e5;
+  color: #41464b;
+}
+
+/* Layout */
+
 .layout {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+  gap: 1.75rem;
   align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 @media (max-width: 800px) {
@@ -64,51 +127,99 @@
   }
 }
 
-/* Board */
-.players {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
+/* Board area */
 
-.playerCard {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
+.boardArea {
   display: flex;
   flex-direction: column;
 }
 
+/* Players row — sits inside the dark board */
+
+.players {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-wrap: wrap;
+}
+
+.playerCard {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 0.45rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 110px;
+  text-align: center;
+}
+
 .playerName {
   font-weight: 700;
+  font-size: 0.95rem;
+  color: #e8f2ed;
 }
 
 .playerElo {
-  font-size: 0.8rem;
-  color: var(--color-accent-2);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
 }
 
 .vsSmall {
-  color: var(--color-text-muted);
-  font-size: 1.2rem;
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0 0.25rem;
 }
+
+/* Game board */
 
 .board {
   width: 100%;
-  min-height: 620px;
+  min-height: 580px;
   border-radius: 16px;
-  border: 3px solid rgba(0, 0, 0, 0.3);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 0 40px rgba(0,0,0,0.3);
+  border: 3px solid rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.3),
+    inset 0 0 60px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(255,255,255,0.05);
   background: #1e3d2f;
+  position: relative;
+  overflow: hidden;
 }
+
+.board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.012) 40px,
+    rgba(255,255,255,0.012) 41px
+  );
+  pointer-events: none;
+  border-radius: 13px;
+}
+
+.monitorBar {
+  width: 100%;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+  margin-bottom: 0.5rem;
+}
+
+/* Waiting overlay */
 
 .waitingOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(10, 25, 15, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -117,10 +228,17 @@
 
 .waitingBox {
   background: var(--color-surface);
-  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
   padding: 2rem 2.5rem;
   text-align: center;
-  max-width: 300px;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.waitingBox p {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
 }
 
 .spinner {
@@ -131,13 +249,8 @@
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .pollNote {
@@ -146,69 +259,93 @@
   margin-top: 0.5rem;
 }
 
+/* Finished placeholder */
+
 .placeholderMsg {
   color: rgba(255, 255, 255, 0.85);
-  font-family: 'Cinzel', serif;
   font-size: 1.1rem;
   text-align: center;
-  padding: 1rem;
+  padding: 3rem 1rem;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Sidebar */
+
 .sidebar {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  position: sticky;
+  top: 1rem;
 }
 
 .sidebarTitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.6rem;
+  color: var(--color-text-heading);
 }
 
 .commentList {
   list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-height: 300px;
+  gap: 0.6rem;
+  max-height: 280px;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
 }
 
+.commentList::-webkit-scrollbar { width: 4px; }
+.commentList::-webkit-scrollbar-track { background: transparent; }
+.commentList::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
 .comment {
-  background: var(--color-surface-2);
+  background: var(--color-surface-2, rgba(0,0,0,0.04));
   border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.875rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.855rem;
   text-align: left;
   overflow-wrap: break-word;
   word-break: break-word;
   min-width: 0;
+  border-left: 2px solid var(--color-border);
 }
 
 .comment p {
-  margin: 0.25rem 0 0;
+  margin: 0.2rem 0 0;
+  line-height: 1.4;
 }
 
 .commentMeta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
+  align-items: center;
+  font-size: 0.76rem;
   color: var(--color-text-muted);
+  gap: 0.5rem;
+}
+
+.commentMeta strong {
+  color: var(--color-text);
 }
 
 .noComments {
   color: var(--color-text-muted);
   font-style: italic;
   font-size: 0.875rem;
+  text-align: center;
+  padding: 0.5rem 0;
 }
 
 .commentForm {
@@ -219,27 +356,31 @@
 
 .commentInput {
   width: 100%;
-  padding: 0.6rem;
+  box-sizing: border-box;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text);
-  font-family: 'Lato', sans-serif;
+  font-family: inherit;
+  font-size: 0.875rem;
   resize: vertical;
+  transition: border-color 0.15s;
 }
 
 .commentInput:focus {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: var(--color-secondary);
 }
 
 .loginPrompt {
   font-size: 0.875rem;
   color: var(--color-text-muted);
+  text-align: center;
 }
 
 .monitorSection {
-  border-top: 2px solid var(--color-border);
-  padding-top: 1.25rem;
-  margin-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+  margin-top: 0.25rem;
 }

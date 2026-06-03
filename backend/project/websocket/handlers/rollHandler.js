@@ -1,108 +1,198 @@
 import { Game } from "../../models/game.js";
 import { rollDice } from "../../services/game.services.js";
-import { startRoundTimer } from "../../utils/gameTimer.js";
+import { startTurnTimer, clearTurnTimer, startBettingTimer } from "../../utils/gameTimer.js";
 
-// Rolls dice for all players at the start of a round
-// Called by roundHandler when a new round starts
-// Rolls are generated on the backend and sent individually to each player
+export const ROLLS_PER_TURN = 3;
+
+// Entry point: starts the rolling phase for the current round
+// Sets the first player's turn and waits for them to click Roll
 export async function handleRoll(io, game) {
-    const gameId = game.gameId;
+    game.currentPhase = "rolling";
+    game.rollsUsed = 0;
 
-    // Roll dice for each active player
-    for (const player of game.players) {
-        // Abandoned players still get rolls but can't hold
-        const rolls = rollDice();
+    const firstPlayer = game.players.find(p => !p.abandoned);
+    if (!firstPlayer) return;
 
-        // Find or create the round entry for this player
-        const existingRound = player.rounds.find(r => r.roundNumber === game.currentRound);
-        if (existingRound) {
-            existingRound.rolls = rolls;
-            existingRound.holds = [];
-            existingRound.revealed = false;
-        } else {
-            player.rounds.push({
+    game.currentTurnUserId = firstPlayer.userId;
+    await game.save();
+
+    const timeMs = (game.variantId?.timeControl || 30) * 1000;
+    const expiresAt = Date.now() + timeMs;
+
+    io.to(`game:${game.gameId}`).emit("round_start", {
+        roundNumber: game.currentRound,
+        phase: "rolling",
+        currentTurnUserId: firstPlayer.userId,
+        expiresAt,
+        // Include player stacks so frontend can sync points after round end
+        players: game.players.map(p => ({ userId: p.userId, points: p.points }))
+    });
+
+    startTurnTimer(io, game, timeMs);
+}
+
+// Performs one roll for the current player
+// holds: indices of dice to keep from the previous roll (empty = roll all 5)
+export async function doRoll(io, game, holds) {
+    clearTurnTimer(game.gameId);
+
+    const player = game.players.find(p => p.userId === game.currentTurnUserId);
+    if (!player) return;
+
+    let currentRound = player.rounds.find(r => r.roundNumber === game.currentRound);
+
+    let newRolls;
+    if (!currentRound || !currentRound.rolls.length || game.rollsUsed === 0) {
+        // First roll of this turn — roll all 5 dice
+        newRolls = rollDice();
+    } else {
+        // Re-roll: keep held dice, randomise the rest
+        const POKER_FACES = ["7", "8", "J", "Q", "K", "A"];
+        newRolls = currentRound.rolls.map((val, i) =>
+            holds.includes(i) ? val : POKER_FACES[Math.floor(Math.random() * POKER_FACES.length)]
+        );
+    }
+
+    if (!currentRound) {
+        player.rounds.push({
+            roundNumber: game.currentRound,
+            rolls: newRolls,
+            holds,
+            revealed: false,
+            folded: false,
+            bets: []
+        });
+    } else {
+        currentRound.rolls = newRolls;
+        currentRound.holds = holds;
+    }
+
+    game.rollsUsed = (game.rollsUsed || 0) + 1;
+    game.markModified("players");
+    await game.save();
+
+    // Send dice only to the current player
+    const sockets = await io.in(`game:${game.gameId}`).fetchSockets();
+    const playerSocket = sockets.find(s => s.user?.userId === game.currentTurnUserId);
+    if (playerSocket) {
+        playerSocket.emit("roll_result", {
+            roundNumber: game.currentRound,
+            rolls: newRolls,
+            holds,
+            rollsUsed: game.rollsUsed,
+            rollsTotal: ROLLS_PER_TURN
+        });
+    }
+
+    const timeMs = (game.variantId?.timeControl || 30) * 1000;
+    const expiresAt = Date.now() + timeMs;
+
+    // Broadcast roll count to everyone (no dice values)
+    io.to(`game:${game.gameId}`).emit("turn_update", {
+        currentTurnUserId: game.currentTurnUserId,
+        rollsUsed: game.rollsUsed,
+        rollsTotal: ROLLS_PER_TURN,
+        roundNumber: game.currentRound,
+        expiresAt
+    });
+
+    if (game.rollsUsed >= ROLLS_PER_TURN) {
+        // All 3 rolls used — auto-end after a short pause
+        clearTurnTimer(game.gameId);
+        setTimeout(() => endTurn(io, game.gameId), 2500);
+    } else {
+        startTurnTimer(io, game, timeMs);
+    }
+}
+
+// Handles a re-roll request from the current player
+export async function handleReRoll(io, socket, gameId, holds) {
+    const game = await Game.findOne({ gameId: Number(gameId) }).populate("variantId");
+
+    if (!game || game.status !== "ongoing") return socket.emit("error", { msg: "Game not active" });
+    if (game.currentPhase !== "rolling") return socket.emit("error", { msg: "Not the rolling phase" });
+    if (game.currentTurnUserId !== socket.user.userId) return socket.emit("error", { msg: "It is not your turn" });
+    
+    // Use 0 as fallback in case rollsUsed is undefined or stale
+    const rollsUsed = game.rollsUsed ?? 0;
+    if (rollsUsed >= ROLLS_PER_TURN) return socket.emit("error", { msg: "No rolls remaining" });
+
+    const validHolds = (holds || []).filter(i => i >= 0 && i <= 4);
+    await doRoll(io, game, validHolds);
+}
+
+// Ends the current player's turn
+// Moves to the next player or starts the betting phase when all have rolled
+export async function endTurn(io, gameId) {
+    const game = await Game.findOne({ gameId: Number(gameId) }).populate("variantId");
+    if (!game || game.status !== "ongoing" || game.currentPhase !== "rolling") return;
+
+    clearTurnTimer(gameId);
+
+    console.log("endTurn called for game:", gameId);
+    console.log("currentTurnUserId:", game.currentTurnUserId);
+    console.log("currentRound:", game.currentRound);
+    console.log("players:", game.players.map(p => ({
+        userId: p.userId,
+        abandoned: p.abandoned,
+        rounds: p.rounds.filter(r => r.roundNumber === game.currentRound).map(r => ({
+            roundNumber: r.roundNumber,
+            rollsLength: r.rolls?.length
+        }))
+    })));
+
+    // If the current player hasn't rolled at all (timed out), give them a random hand
+    const currentPlayer = game.players.find(p => p.userId === game.currentTurnUserId);
+    if (currentPlayer) {
+        const hasRolled = currentPlayer.rounds.some(
+            r => r.roundNumber === game.currentRound && r.rolls?.length > 0
+        );
+        if (!hasRolled) {
+            currentPlayer.rounds.push({
                 roundNumber: game.currentRound,
-                rolls,
+                rolls: rollDice(),
                 holds: [],
                 revealed: false,
                 folded: false,
                 bets: []
             });
+            game.markModified("players");
+            await game.save();
         }
     }
 
-    game.currentPhase = "rolling";
-    await game.save();
+    // Find next player who has not rolled yet this round
+    const nextPlayer = game.players.find(p =>
+        !p.abandoned &&
+        !p.rounds.some(r => r.roundNumber === game.currentRound && r.rolls?.length > 0)
+    );
 
-    // Send each player only their own rolls
-    // Other players' rolls are hidden until reveal
-    const sockets = await io.in(`game:${gameId}`).fetchSockets();
-    for (const s of sockets) {
-        const player = game.players.find(p => p.userId === s.user?.userId);
-        if (!player) continue;
+    if (nextPlayer) {
+        game.currentTurnUserId = nextPlayer.userId;
+        game.rollsUsed = 0;
+        game.markModified("players");
+        await game.save();
 
-        const currentRound = player.rounds.find(r => r.roundNumber === game.currentRound);
-        if (!currentRound) continue;
+        const timeMs = (game.variantId?.timeControl || 30) * 1000;
+        const expiresAt = Date.now() + timeMs;
 
-        s.emit("roll_result", {
+        // Emit after save to ensure DB state matches what we tell the frontend
+        io.to(`game:${gameId}`).emit("turn_update", {
+            currentTurnUserId: nextPlayer.userId,
+            rollsUsed: 0,
+            rollsTotal: ROLLS_PER_TURN,
             roundNumber: game.currentRound,
-            rolls: currentRound.rolls,
-            holds: currentRound.holds
+            expiresAt
         });
+
+        startTurnTimer(io, game, timeMs);
+    } else {
+        // All players have rolled — start betting
+        game.currentPhase = "betting";
+        game.currentTurnUserId = null;
+        game.rollsUsed = 0;
+        await game.save();
+        io.to(`game:${gameId}`).emit("phase_change", { phase: "betting" });
+        startBettingTimer(io, game);
     }
-
-    // Broadcast to all that a new round has started
-    // Does not include any roll data
-    io.to(`game:${gameId}`).emit("round_start", {
-        roundNumber: game.currentRound,
-        phase: "rolling"
-    });
-
-    // Start the round timer after broadcasting
-    // If time runs out before all players act, round ends automatically
-    startRoundTimer();
-}
-
-// Handles a player holding dice
-// Validates the holds and broadcasts to all players
-// Holds are visible to other players, only the values are hidden
-export async function handleHold(io, socket, gameId, holds) {
-    const game = await Game.findOne({ gameId: Number(gameId) });
-
-    if (!game || game.status !== "ongoing") {
-        return socket.emit("error", { msg: "Game is not ongoing" });
-    }
-
-    if (game.currentPhase !== "rolling") {
-        return socket.emit("error", { msg: "It is not the rolling phase" });
-    }
-
-    const player = game.players.find(p => p.userId === socket.user.userId);
-    if (!player) {
-        return socket.emit("error", { msg: "You are not a player in this game" });
-    }
-
-    if (player.abandoned) {
-        return socket.emit("error", { msg: "Abandoned players cannot hold dice" });
-    }
-
-    // Validate holds, must be indices 0-4
-    const validHolds = holds.filter(i => i >= 0 && i <= 4);
-
-    // Update the player's holds for this round
-    const currentRound = player.rounds.find(r => r.roundNumber === game.currentRound);
-    if (!currentRound) {
-        return socket.emit("error", { msg: "Round not found" });
-    }
-
-    currentRound.holds = validHolds;
-    await game.save();
-
-    // Broadcast holds to all players
-    // Only the indices are shared, not the dice values
-    io.to(`game:${gameId}`).emit("holds_update", {
-        userId: socket.user.userId,
-        roundNumber: game.currentRound,
-        holds: validHolds
-    });
 }

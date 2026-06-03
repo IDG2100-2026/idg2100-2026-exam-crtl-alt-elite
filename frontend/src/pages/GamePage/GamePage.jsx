@@ -49,6 +49,8 @@ export default function GamePage() {
     const [comment, setComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [commentErr, setCommentErr] = useState(null);
+    const [joining, setJoining] = useState(false);
+    const [joinErr, setJoinErr] = useState(null);
     const pollRef = useRef(null);
 
     useEffect(() => {
@@ -57,8 +59,11 @@ export default function GamePage() {
                 const data = await gameApi.getById(id);
                 setGame(data);
                 setError(null);
-                // Stop polling once game has started
-                if (data.status !== 'room') clearInterval(pollRef.current);
+                // Stop polling once game has started or finished
+                if (data.status !== 'room') {
+                    console.log('Stopping poll, game status:', data.status);
+                    clearInterval(pollRef.current);
+                }
             } catch (err) {
                 setError(err.message || 'Failed to load game.');
             } finally {
@@ -107,6 +112,20 @@ export default function GamePage() {
         };
     }, [id]);
 
+    async function joinGame() {
+        setJoining(true);
+        setJoinErr(null);
+        try {
+            await gameApi.joinRoom(id);
+            const data = await gameApi.getById(id);
+            setGame(data);
+        } catch (err) {
+            setJoinErr(err.message || 'Failed to join game.');
+        } finally {
+            setJoining(false);
+        }
+    }
+
     async function handleCommentSubmit(e) {
         e.preventDefault();
         if (!comment.trim()) return;
@@ -145,47 +164,72 @@ export default function GamePage() {
     const p1Elo = p1?.eloRating || '-';
 
     const variant = game.variantId;
-    const variantLabel = variant
-        ? `Best of ${variant.rounds} · ${variant.timeControl}s total · Straights ${variant.straightsAllowed ? 'on' : 'off'} · ${variant.numPlayers} players · ${variant.buyIn} pt buy-in`
-        : 'Unknown variant';
 
     return (
         <div className={styles.page}>
 
             <div className={styles.gameHeader}>
                 <h1>{p0Name} <span className={styles.vs}>vs</span> {p1Name}</h1>
-                <p className={styles.variant}>{variantLabel}</p>
                 <span className={`${styles.statusBadge} ${styles[game.status]}`}>{game.status}</span>
+                {variant && (
+                    <div className={styles.variantChips}>
+                        <span className={styles.chip}>Best of {variant.rounds}</span>
+                        <span className={styles.chip}>{variant.timeControl}s per turn</span>
+                        <span className={`${styles.chip} ${variant.straightsAllowed ? styles.chipOn : styles.chipOff}`}>
+                            Straights {variant.straightsAllowed ? 'on' : 'off'}
+                        </span>
+                        <span className={styles.chip}>{variant.numPlayers} players</span>
+                        <span className={styles.chip}>{variant.buyIn} pt buy-in</span>
+                    </div>
+                )}
             </div>
 
             <div className={styles.layout}>
 
                 {/* Game board */}
                 <div className={styles.boardArea}>
-                    <div className={styles.players}>
-                        <div className={styles.playerCard}>
-                            <span className={styles.playerName}>{p0Name}</span>
-                            <span className={styles.playerElo}>Elo {p0Elo}</span>
-                        </div>
-                        <span className={styles.vsSmall}>vs</span>
-                        <div className={styles.playerCard}>
-                            <span className={styles.playerName}>{p1Name}</span>
-                            <span className={styles.playerElo}>Elo {p1Elo}</span>
-                        </div>
-                    </div>
-
                     <div className={styles.board} style={{ background: boardColor }}>
-                        {game.status === 'room' && (
-                            <div className={styles.waitingOverlay}>
-                                <div className={styles.waitingBox}>
-                                    <p>Waiting for players to join...</p>
-                                    <p className={styles.pollNote}>
-                                        {game.players?.length}/{variant?.numPlayers} players joined
-                                    </p>
-                                    <p className={styles.pollNote}>Page refreshes automatically every 15 seconds.</p>
-                                </div>
+                        <div className={styles.players}>
+                            <div className={styles.playerCard}>
+                                <span className={styles.playerName}>{p0Name}</span>
+                                <span className={styles.playerElo}>Elo {p0Elo}</span>
                             </div>
-                        )}
+                            <span className={styles.vsSmall}>vs</span>
+                            <div className={styles.playerCard}>
+                                <span className={styles.playerName}>{p1Name}</span>
+                                <span className={styles.playerElo}>Elo {p1Elo}</span>
+                            </div>
+                        </div>
+                        {game.status === 'room' && (() => {
+                            const alreadyIn = game.players?.some(p => p.userId === user?.userId);
+                            const isFull = game.players?.length >= variant?.numPlayers;
+                            return (
+                                <div className={styles.waitingOverlay}>
+                                    <div className={styles.waitingBox}>
+                                        <p>{alreadyIn ? 'Waiting for other players...' : 'Join this game?'}</p>
+                                        <p className={styles.pollNote}>
+                                            {game.players?.length}/{variant?.numPlayers} players joined
+                                        </p>
+                                        {!alreadyIn && !isFull && user && (
+                                            <>
+                                                <button
+                                                    className="button button-secondary"
+                                                    onClick={joinGame}
+                                                    disabled={joining}
+                                                    style={{ marginTop: '1rem' }}
+                                                >
+                                                    {joining ? 'Joining...' : `Join (${variant?.buyIn} pt buy-in)`}
+                                                </button>
+                                                {joinErr && <p style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.85rem' }}>{joinErr}</p>}
+                                            </>
+                                        )}
+                                        {alreadyIn && (
+                                            <p className={styles.pollNote}>Page refreshes automatically every 15 seconds.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         {game.status === 'ongoing' && (
                             <GameBoard game={game} />
                         )}
@@ -193,7 +237,9 @@ export default function GamePage() {
                             <div className={styles.placeholderMsg}>
                                 Game finished
                                 {game.winnerId?.length > 0 && (
-                                    <p>Winner: {game.winnerId.join(', ')}</p>
+                                    <p>Winner: {game.winnerId.map(id =>
+                                        game.players?.find(p => p.userId === id)?.username || `Player ${id}`
+                                    ).join(', ')}</p>
                                 )}
                             </div>
                         )}

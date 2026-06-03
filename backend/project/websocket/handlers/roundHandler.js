@@ -6,7 +6,7 @@ import {
     updateELORatings
 } from "../../services/game.services.js";
 
-// Handles the end og a betting phase
+// Handles the end of a betting phase
 // Reveals all dice, determines round winner, starts next round or ends game
 export async function handleRoundEnd(io, game) {
     const gameId = game.gameId;
@@ -50,14 +50,16 @@ export async function handleRoundEnd(io, game) {
         player.currentBet = 0;
     }
 
+    game.markModified("players");
     await game.save();
 
-    // Broadcast reveal to all players
+    // Broadcast reveal to all players including updated points
     io.to(`game:${gameId}`).emit("round_end", {
         roundNumber: game.currentRound,
         reveal: revealData,
         roundWinners,
-        pot: splitAmount
+        pot: splitAmount,
+        players: game.players.map(p => ({ userId: p.userId, points: p.points }))
     });
 
     // Check if the game is over
@@ -70,7 +72,7 @@ export async function handleRoundEnd(io, game) {
         game.currentPhase = "rolling";
         await game.save();
 
-        // Small delay before starting next round
+        // Small delay before starting next round so players can see reveal results
         setTimeout(async () => {
             const updatedGame = await Game.findOne({ gameId })
                 .populate("variantId");
@@ -92,19 +94,24 @@ function determineRoundWinners(game) {
         return [activePlayers[0].userId];
     }
 
+    // If all players folded, pot stays — give it to the last folder as a fallback
+    if (activePlayers.length === 0) {
+        return [game.players[0].userId];
+    }
+
     // Rank each active player's hand
     const ranked = activePlayers.map(player => {
         const round = player.rounds.find(r => r.roundNumber === game.currentRound);
         return {
             userId: player.userId,
-            score: evaluateHand(round?.rolls || [])
+            score: evaluateHand(round?.rolls || [], game.variantId?.straightsAllowed ?? true)
         };
     });
 
-    // Sort by score decending
+    // Sort by score descending
     ranked.sort((a, b) => b.score - a.score);
 
-    // Return all players tied for the highest score 
+    // Return all players tied for the highest score
     const highestScore = ranked[0].score;
     return ranked
         .filter(p => p.score === highestScore)
@@ -121,7 +128,7 @@ async function handleGameEnd(io, game) {
         player.finalPoints = player.points;
     }
 
-    // Determine overall game winners
+    // Determine overall game winners based on final point stacks
     game.winnerId = determineWinners(game.players);
     game.status = "finished";
     game.finishedAt = new Date();
@@ -147,43 +154,48 @@ async function handleGameEnd(io, game) {
 // Higher score = better hand
 // Hand rankings (high to low):
 // Five of a kind, Four of a kind, Full house,
-// Straight, Three of a kind, Two pair, One pair, High card
-export function evaluateHand(dice) {
+// Straight (if allowed), Three of a kind, Two pair, One pair, High card
+export function evaluateHand(dice, straightsAllowed = true) {
     if (!dice || dice.length !== 5) return 0;
 
-    // Count occurences of each die value
+    // Map poker faces to numeric rank: 7→1, 8→2, J→3, Q→4, K→5, A→6
+    const FACE_RANK = { "7": 1, "8": 2, "J": 3, "Q": 4, "K": 5, "A": 6 };
+
+    // Count occurrences of each die value
     const counts = {};
     for (const die of dice) {
         counts[die] = (counts[die] || 0) + 1;
     }
 
     const values = Object.values(counts).sort((a, b) => b - a);
-    const sorted = [...dice].sort((a, b) => a -b);
+    const sorted = [...dice].sort((a, b) => FACE_RANK[a] - FACE_RANK[b]);
 
-    // Five of a kind
-    if (values[0] === 5) return 7;
+    let handScore;
 
-    // Four of a kind
-    if (values[0] === 4) return 6;
+    if (values[0] === 5) {
+        handScore = 7;
+    } else if (values[0] === 4) {
+        handScore = 6;
+    } else if (values[0] === 3 && values[1] === 2) {
+        handScore = 5;
+    } else if (straightsAllowed && sorted.every((val, i) => i === 0 || FACE_RANK[val] === FACE_RANK[sorted[i - 1]] + 1)) {
+        handScore = 4;
+    } else if (values[0] === 3) {
+        handScore = 3;
+    } else if (values[0] === 2 && values[1] === 2) {
+        handScore = 2;
+    } else if (values[0] === 2) {
+        handScore = 1;
+    } else {
+        handScore = 0;
+    }
 
-    // Full house (three of a kind + pair)
-    if (values[0] === 3 && values[1] === 2) return 5;
+    // Tiebreaker: sort by count desc then rank desc so higher-ranked pairs beat lower-ranked ones
+    // e.g. pair of Aces beats pair of 7s
+    const tiebreaker = Object.entries(counts)
+        .map(([face, count]) => ({ rank: FACE_RANK[face] || 0, count }))
+        .sort((a, b) => b.count - a.count || b.rank - a.rank)
+        .reduce((acc, { rank }, i) => acc + rank * Math.pow(10, (4 - i)), 0);
 
-    // Straight (1-2-3-4-5 or 2-3-4-5-6)
-    const isStraight = sorted.every((val, i) =>
-        i === 0 || val === sorted[i - 1] + 1
-    );
-    if (isStraight) return 4;
-
-    // Three of a kind
-    if (values[0] === 3) return 3;
-
-    // Two pair
-    if (values[0] === 2 && values[1] === 2) return 2;
-
-    // One pair
-    if (values[0] === 2) return 1;
-
-    // High card
-    return 0;
+    return handScore * 1000000 + tiebreaker;
 }

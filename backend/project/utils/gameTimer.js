@@ -1,57 +1,68 @@
 import { Game } from "../models/game.js";
 import { handleRoundEnd } from "../websocket/handlers/roundHandler.js";
 
-// Stores active timers by gameId
-// Allows timers to be cleared when a round ends naturally
-const activeTimers = new Map();
+// Per-turn timers (rolling phase): one per active game
+const turnTimers = new Map();
 
-// Starts the timer for a round
-// If the time runs out, abandoned players are auto-matched and round ends
-export function startRoundTimer(io, game) {
+// Per-round betting timers: one per active game
+const bettingTimers = new Map();
+
+// Starts a countdown for the current player's turn
+// When it fires, ends the turn (moves to next player or starts betting)
+// Uses dynamic import to avoid circular dependency with rollHandler
+export function startTurnTimer(io, game, timeMs) {
     const gameId = game.gameId;
-    const timeLimit = game.variantId?.timeControl * 1000 || 30000;
-
-    // Clear any existing timer for this game
-    clearRoundTimer(gameId);
+    clearTurnTimer(gameId);
 
     const timer = setTimeout(async () => {
+        turnTimers.delete(gameId);
         try {
-            const currentGame = await Game.findOne({ gameId })
-                .populate("variantId");
-
-            if (!currentGame || currentGame.status !== "ongoing") return;
-
-            // Mark players who haven't acted as abandoned
-            for (const player of currentGame.players) {
-                const currentRound = player.rounds.find(
-                    r => r.roundNumber === currentGame.currentRound
-                );
-
-                // If no rolls recorded, player timed out
-                if (!currentRound || currentRound.rolls.length === 0) {
-                    player.abandoned = true;
-                }
-            }
-
-            await currentGame.save();
-
-            // Force end the round
-            await handleRoundEnd(io, currentGame);
+            const { endTurn } = await import("../websocket/handlers/rollHandler.js");
+            await endTurn(io, gameId);
         } catch (err) {
-            console.error("Round timer error:", err.message);
-        } finally {
-            activeTimers.delete(gameId);
+            console.error("Turn timer error:", err.message);
         }
-    }, timeLimit);
+    }, timeMs);
 
-    activeTimers.set(gameId, timer);
+    turnTimers.set(gameId, timer);
 }
 
-// Clears the timer for a game
-// Called when a round ends naturally before time runs out
-export function clearRoundTimer(gameId) {
-    if (activeTimers.has(gameId)) {
-        clearTimeout(activeTimers.get(gameId));
-        activeTimers.delete(gameId);
+export function clearTurnTimer(gameId) {
+    if (turnTimers.has(gameId)) {
+        clearTimeout(turnTimers.get(gameId));
+        turnTimers.delete(gameId);
     }
 }
+
+// Starts the betting phase timer
+// When it fires, ends the round (forces unfinished bets to close)
+export function startBettingTimer(io, game) {
+    const gameId = game.gameId;
+    const timeMs = (game.variantId?.timeControl || 30) * 1000;
+    clearBettingTimer(gameId);
+
+    const timer = setTimeout(async () => {
+        bettingTimers.delete(gameId);
+        try {
+            const g = await Game.findOne({ gameId }).populate("variantId");
+            if (g && g.status === "ongoing" && g.currentPhase === "betting") {
+                await handleRoundEnd(io, g);
+            }
+        } catch (err) {
+            console.error("Betting timer error:", err.message);
+        }
+    }, timeMs);
+
+    bettingTimers.set(gameId, timer);
+}
+
+export function clearBettingTimer(gameId) {
+    if (bettingTimers.has(gameId)) {
+        clearTimeout(bettingTimers.get(gameId));
+        bettingTimers.delete(gameId);
+    }
+}
+
+// Backward-compat aliases used by betHandler.js
+export const startRoundTimer = startBettingTimer;
+export const clearRoundTimer = clearBettingTimer;

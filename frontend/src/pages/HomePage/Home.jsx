@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { Link } from "react-router";
+import { useNavigate, Link } from "react-router";
+import { gameApi } from "@/api/api.js";
 import GameCard from "@/components/GameCard/GameCard";
 import { useSettings } from "@/context/SettingsContext";
 import { activityApi } from "@/api/api.js";
@@ -23,12 +23,10 @@ export default function Home() {
                 setLoading(true);
                 setError(null);
 
-                const lobbyRes = await fetch(`http://localhost:9000/api/games?status=room&limit=${lobbyGamesCount}`);
-                const lobbyData = await lobbyRes.json();
+                const lobbyData = await gameApi.getAll({ status: "room", limit: lobbyGamesCount });
                 setLobbyGames(lobbyData.games ?? []);
 
-                const ongoingRes = await fetch("http://localhost:9000/api/games?status=ongoing&limit=5");
-                const ongoingData = await ongoingRes.json();
+                const ongoingData = await gameApi.getAll({ status: "ongoing", limit: 5 });
                 setTopGames(ongoingData.games ?? []);
 
                 const activityData = await activityApi.get();
@@ -45,7 +43,7 @@ export default function Home() {
     return (
         <div className={Styles.homeContainer}>
 
-            {/* Hero - unchanged from your original */}
+            {/* Hero */}
             <section className={Styles.hero}>
                 <img className={Styles.mainImg} src={mainImg} alt="spanish poker dice" />
                 <div className={Styles.heroContent}>

@@ -2,6 +2,8 @@ import { Game } from "../models/game.js";
 import { GameVariant } from "../models/gameVariant.js";
 import { User } from "../models/user.js";
 import gameServices from "../services/game.services.js";
+import { getIO } from "../websocket/socket.js";
+import { handleRoll } from "../websocket/handlers/rollHandler.js";
 
 import {
     PAGE,
@@ -179,14 +181,15 @@ export async function joinRoom(req, res, next) {
         // Add the player to the game
         game.players.push({
             userId: req.user.userId,
-            points: game.variantId.buyIn,
+            points: game.variantId.buyIn * 10,
             currentBet: 0,
             abandoned: false,
             rounds: []
         });
 
         // Start the game automatically if the room is now full
-        if (game.players.length === game.variantId.numPlayers) {
+        const gameStarting = game.players.length === game.variantId.numPlayers;
+        if (gameStarting) {
             game.status = "ongoing";
             game.startedAt = new Date();
         }
@@ -194,9 +197,16 @@ export async function joinRoom(req, res, next) {
         await game.save();
 
         res.json({
-            msg: game.status === "ongoing" ? "Game is starting!" : "Joined game room",
+            msg: gameStarting ? "Game is starting!" : "Joined game room",
             game
         });
+
+        // Trigger first round after response is sent
+        if (gameStarting) {
+            const io = getIO();
+            const freshGame = await Game.findOne({ gameId: game.gameId }).populate("variantId");
+            await handleRoll(io, freshGame);
+        }
     } catch (err) {
         next(err);
     }
@@ -207,7 +217,8 @@ export async function joinRoom(req, res, next) {
 // Can only leave a room, not an ongoing game
 export async function leaveRoom(req, res, next) {
     try {
-        const game = await Game.findOne({ gameId: Number(req.validData.id) });
+        const game = await Game.findOne({ gameId: Number(req.validData.id) })
+            .populate("variantId");
 
         if (!game) {
             return res.status(404).json({ msg: "Game was not found" });
