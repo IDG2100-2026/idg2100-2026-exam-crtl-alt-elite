@@ -11,7 +11,7 @@ All reused code has been significantly modified to fit the new shared architectu
 
 We reused and modified parts of the following:
 
-- **Oblig 3 (Fullstack assignment) - Nora Storro**: Authentication flow (register/login/JWT), user model, and basic game/tournament structure were adapted from this submission. All code has been reworked to fit the new architecture and requirements.
+- **Oblig 3 (Nora) - Backend**: Authentication flow (register/login/JWT), user model, and basic game/tournament structure were adapted from this submission. All code has been reworked to fit the new architecture and requirements.
 
 - **Oblig 1 (Sanna)**: The dice web components (`dice-poker-die`, `dice-poker-board`, `dice-poker-monitor`) were reused and adapted from the individual Oblig 1 submission.
 
@@ -26,19 +26,9 @@ All reused code has been modified to fit the new architecture. Sources are noted
 
 All team members contributed to both backend and frontend. Rough feature ownership:
 
-- **Nora Storro**: Backend architecture (auth, JWT, email verification, models, validators, WebSocket game and comment socket, admin backend, seed script), individual tournament page, login/register frontend fixes
+- **Nora**: Backend architecture (auth, JWT, email verification, models, validators, WebSocket game and comment socket, admin backend, seed script), individual tournament page, login/register frontend fixes
 - **Sanna**: Static pages, user profile page, styling/dark mode/settings panel/responsive layout, game board frontend, dice web components, admin frontend pages, leaderboard page, homepage activity section, bug fixes
 - **Sabrina**: Create game page, AuthContext setup, frontend tree structure, admin page structure, tournament page restructure and styling
-
-Branch overview:
-- `feature/login-register` - Authentication (register, login, JWT, email verification)
-- `feature/user-profile` - User profile page, avatar upload, edit profile
-- `feature/static-pages` - About Us, How to Play, Terms, Privacy Policy, 404
-- `feature/styling` - Dark/light theme, settings panel, hamburger menu, responsive layout
-- `feature/individual-tournament` - Individual tournament page, countdown hook, tournament comments
-- `feat/Admin` - Admin dashboard, user admin, comment admin pages
-- `feature/lobby-game` - Game board (WebSocket), betting UI, dice components, lobby filters, leaderboard
-- `feat/createGamePage` - Create game page and game variant selection
 
 
 ## Notes on running the project
@@ -53,7 +43,7 @@ Branch overview:
 
 1. Navigate to the backend folder:
 ```bash
-cd backend
+cd backend/project
 npm install
 ```
 
@@ -78,7 +68,7 @@ npm run seed
 ```
 
 The seed script creates:
-- 15 sample users (all with password `password123`), including 1 admin and users with various Elo ratings and points
+- 15 sample users, including 2 admins and users with various Elo ratings and points
 - 162 game variants (all combinations of rounds × time control × straights × players × buy-in)
 - Sample games in various states (room, ongoing, finished)
 - Sample tournaments (upcoming, ongoing, finished, cancelled)
@@ -114,9 +104,9 @@ npm run dev
 The app will be available at `http://localhost:5173`.
 
 ### Admin access
-Log in with one of the seeded admin accounts (both have password `password123`):
-- `alice@example.com` / username: `admin_alice`
-- `bob@example.com` / username: `admin_bob`
+Log in with one of the seeded admin accounts:
+- `alice@example.com` / username: `admin_alice` / password: `password12345`
+- `bob@example.com` / username: `admin_bob` / password: `password123`
 
 
 ## What is implemented
