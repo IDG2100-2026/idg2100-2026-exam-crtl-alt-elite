@@ -83,7 +83,7 @@ export default function GameBoard({ game }) {
     const roundWinsRef = useRef({ player1: 0, player2: 0 });
 
     const isMyTurn = currentTurnUserId === myUserId && phase === 'rolling';
-    // Only count rolls when it's actually my turn — ignore rollsUsed from other players' turns
+    // Only count rolls when it's actually my turn, ignore rollsUsed from other players' turns
     const myRollsUsed = isMyTurn ? rollsUsed : 0;
     const canRoll = isMyTurn && myRollsUsed < ROLLS_PER_TURN;
 
@@ -165,7 +165,7 @@ export default function GameBoard({ game }) {
             });
             setRollsUsed(used);
             setRoundNumber(rn);
-            // Only update the countdown when it's my turn — prevents re-renders on waiting player
+            // Only update the countdown when it's my turn, prevents re-renders on waiting player
             if (expiresAt && tid === myUserIdRef.current) setTurnExpiresAt(expiresAt);
             if (tid) {
                 const tidx = gamePlayersRef.current?.findIndex(p => p.userId === tid);
@@ -297,7 +297,7 @@ export default function GameBoard({ game }) {
             socket.off('round_end', onRoundEnd);
             socket.off('game_end', onGameEnd);
         };
-    }, [socket]); // myUserId and game.players accessed via refs — no stale closure
+    }, [socket]); // myUserId and game.players accessed via refs, no stale closure
 
     function toggleHold(index) {
         if (!isMyTurn || rollsUsed === 0) return;
@@ -394,7 +394,7 @@ export default function GameBoard({ game }) {
                         )}
                     </div>
 
-                    {/* My dice — shown when it is my turn */}
+                    {/* My dice, shown when it is my turn */}
                     {isMyTurn && (
                         <div className={styles.mySection}>
                             <p className={styles.sectionLabel}>
@@ -421,7 +421,7 @@ export default function GameBoard({ game }) {
                         </div>
                     )}
 
-                    {/* Waiting player — show placeholder dice if not rolled yet, locked dice if done */}
+                    {/* Waiting player, show placeholder dice if not rolled yet, locked dice if done */}
                     {!isMyTurn && isPlayer && (
                         <div className={styles.mySection}>
                             <p className={styles.sectionLabel}>
@@ -440,7 +440,7 @@ export default function GameBoard({ game }) {
                         </div>
                     )}
 
-                    {/* Other players' hold counts — shown to waiting players */}
+                    {/* Other players' hold counts, shown to waiting players */}
                     {Object.keys(otherHolds).length > 0 && (
                         <div className={styles.othersSection}>
                             {Object.entries(otherHolds).map(([uid, holds]) => (
@@ -453,7 +453,7 @@ export default function GameBoard({ game }) {
                 </>
             )}
 
-            {/* Betting phase — show own dice but not opponents' */}
+            {/* Betting phase, show own dice but not opponents' */}
             {phase === 'betting' && (
                 <>
                     {isPlayer && myLockedRolls.length > 0 && (

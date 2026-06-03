@@ -13,7 +13,7 @@ export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Selected variant options — null means "use default from loaded variants"
+    // Selected variant options, null means "use default from loaded variants"
     const [selectedRounds, setSelectedRounds] = useState(null);
     const [selectedStraights, setSelectedStraights] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -32,7 +32,7 @@ export default function CreateGame() {
     const numPlayersOptions = [...new Set(variants?.map(v => v.numPlayers) ?? [])].sort((a, b) => a - b);
     const buyInOptions = [...new Set(variants?.map(v => v.buyIn) ?? [])].sort((a, b) => a - b);
 
-    // Derive effective values — user override takes priority, first option is the default
+    // Derive effective values, user override takes priority, first option is the default
     const effectiveRounds = selectedRounds ?? roundOptions[0] ?? null;
     const effectiveStraights = selectedStraights ?? true;
     const effectiveTime = selectedTime ?? timeOptions[0] ?? null;

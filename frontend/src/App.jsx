@@ -61,7 +61,7 @@ function AppRoutes() {
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="tournaments" element={<TournamentListPage />} />
 
-          {/* Protected routes — must be logged in */}
+          {/* Protected routes, must be logged in */}
           <Route element={<ProtectedRoute />}>
             <Route path="createGame" element={<CreateGame />} />
             <Route path="games/:id" element={<GamePage />} />

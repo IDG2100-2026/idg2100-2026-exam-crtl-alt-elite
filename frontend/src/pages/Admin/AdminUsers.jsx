@@ -124,7 +124,7 @@ export default function AdminUsers() {
                                         </td>
                                         <td>{u.points}</td>
                                         <td>{u.eloRating}</td>
-                                        <td>{u.isBanned ? <span className={styles.bannedTag}>Banned</span> : '—'}</td>
+                                        <td>{u.isBanned ? <span className={styles.bannedTag}>Banned</span> : '-'}</td>
                                         <td className={styles.actions}>
                                             {!u.isBanned && u.userId !== currentUser?.userId && (
                                                 <button className={styles.btnDanger} onClick={() => handleBan(u.userId)}>

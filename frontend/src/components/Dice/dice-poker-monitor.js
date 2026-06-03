@@ -1,4 +1,4 @@
-// Monitor component — displays live game state by listening to board events
+// Monitor component, displays live game state by listening to board events
 class DicePokerMonitor extends HTMLElement {
   static observedAttributes = ["player1", "player2"];
 

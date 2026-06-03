@@ -33,7 +33,7 @@ export async function getAllGames(req, res, next) {
 
         if (userId) filter["players.userId"] = Number(userId);
 
-        // Filter by variant fields (rounds, timeControl) — look up matching variant IDs first
+        // Filter by variant fields (rounds, timeControl), look up matching variant IDs first
         if (rounds || timeControl) {
             const variantFilter = {};
             if (rounds) variantFilter.rounds = Number(rounds);

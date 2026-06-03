@@ -35,7 +35,7 @@ class DicePokerDie extends HTMLElement {
     }));
   }
 
-  // Toggle hold/release — blocked when disabled (not active player's turn)
+  // Toggle hold/release, blocked when disabled (not active player's turn)
   toggleHeld() {
     if (this.hasAttribute("disabled")) return;
 

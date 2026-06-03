@@ -69,7 +69,7 @@ export default function NavBar() {
       </button>
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 
-      {/* Hamburger button — mobile only */}
+      {/* Hamburger button, mobile only */}
       <button
         className={Styles.hamburger}
         onClick={() => setOpen(o => !o)}

@@ -43,7 +43,7 @@ export async function doRoll(io, game, holds) {
 
     let newRolls;
     if (!currentRound || !currentRound.rolls.length || game.rollsUsed === 0) {
-        // First roll of this turn — roll all 5 dice
+        // First roll of this turn, roll all 5 dice
         newRolls = rollDice();
     } else {
         // Re-roll: keep held dice, randomise the rest
@@ -97,7 +97,7 @@ export async function doRoll(io, game, holds) {
     });
 
     if (game.rollsUsed >= ROLLS_PER_TURN) {
-        // All 3 rolls used — auto-end after a short pause
+        // All 3 rolls used, auto-end after a short pause
         clearTurnTimer(game.gameId);
         setTimeout(() => endTurn(io, game.gameId), 2500);
     } else {
@@ -187,7 +187,7 @@ export async function endTurn(io, gameId) {
 
         startTurnTimer(io, game, timeMs);
     } else {
-        // All players have rolled — start betting
+        // All players have rolled, start betting
         game.currentPhase = "betting";
         game.currentTurnUserId = null;
         game.rollsUsed = 0;

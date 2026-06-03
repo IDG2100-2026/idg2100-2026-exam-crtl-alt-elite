@@ -82,7 +82,7 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player updates which dice they are holding — broadcast count to others
+    // Player updates which dice they are holding, broadcast count to others
     // Values are never revealed, only positions are shared (spec line 73)
     socket.on("hold_dice", async ({ gameId, holds }) => {
         try {

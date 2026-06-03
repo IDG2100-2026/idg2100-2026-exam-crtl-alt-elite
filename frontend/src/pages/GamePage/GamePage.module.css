@@ -134,7 +134,7 @@
   flex-direction: column;
 }
 
-/* Players row — sits inside the dark board */
+/* Players row, sits inside the dark board */
 
 .players {
   display: flex;
