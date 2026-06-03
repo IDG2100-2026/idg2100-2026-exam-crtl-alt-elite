@@ -23,9 +23,11 @@ userRouter.put("/:id",
 );
 // /api/users/:id/avatar
 userRouter.put(
-    "/:id/avatar", 
-    requireUser, 
-    uploadMiddleware.uploadAvatar.single("avatar"), 
+    "/:id/avatar",
+    requireUser,
+    userValidator.validateUserId(),
+    validate,
+    uploadMiddleware.uploadAvatar.single("avatar"),
     userController.uploadAvatar
 );
 

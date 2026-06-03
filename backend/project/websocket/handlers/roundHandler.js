@@ -94,9 +94,19 @@ function determineRoundWinners(game) {
         return [activePlayers[0].userId];
     }
 
-    // If all players folded, pot stays — give it to the last folder as a fallback
+    // If all players folded, give the pot to the player who committed the most this round
+    // (highest currentBet means they stayed in the longest before folding)
     if (activePlayers.length === 0) {
-        return [game.players[0].userId];
+        // Exclude abandoned players so a disconnected player cannot receive the pot
+        const foldedPlayers = game.players.filter(p => {
+            const round = p.rounds.find(r => r.roundNumber === game.currentRound);
+            return round?.folded && !p.abandoned;
+        });
+        if (foldedPlayers.length === 0) return [game.players[0].userId];
+        const lastFolder = foldedPlayers.reduce((best, p) =>
+            p.currentBet >= best.currentBet ? p : best
+        );
+        return [lastFolder.userId];
     }
 
     // Rank each active player's hand

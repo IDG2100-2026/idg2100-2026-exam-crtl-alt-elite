@@ -43,7 +43,13 @@ export async function identifyUser(req, res, next) {
     }
 
     // Check the user still exists and isn't banned
-    const user = await User.findOne({ userId: decoded.userId });
+    // Wrapped in try/catch so a DB failure propagates to the error handler instead of crashing the process
+    let user;
+    try {
+        user = await User.findOne({ userId: decoded.userId });
+    } catch (err) {
+        return next(err);
+    }
 
     if (!user) {
         return res.status(401).json({ msg: "User no longer exists" });

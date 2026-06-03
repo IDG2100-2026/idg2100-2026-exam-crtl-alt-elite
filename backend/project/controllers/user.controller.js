@@ -116,8 +116,8 @@ export async function updateUser(req, res, next) {
 // File validation is handled by multer middleware in the route
 export async function uploadAvatar(req, res, next) {
     try {
-        // Finding the user based on the userId
-        const user = await userServices.findUserById(req.params.id);
+        // Finding the user based on the validated userId
+        const user = await userServices.findUserById(req.validData.id);
 
         if (!user) {
             // Not found
