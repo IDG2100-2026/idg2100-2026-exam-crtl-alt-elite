@@ -47,7 +47,7 @@ cd backend/project
 npm install
 ```
 
-2. Create a `.env` file in `backend/` with the following variables:
+2. Create a `.env` file in `backend/project` with the following variables:
 ```
 BACKEND_PORT=9000
 DB_HOSTNAME=localhost
@@ -81,6 +81,7 @@ npm run dev
 ```
 The API will be available at `http://localhost:9000/api`.
 WebSocket connects on the same port.
+
 
 ### Frontend setup
 

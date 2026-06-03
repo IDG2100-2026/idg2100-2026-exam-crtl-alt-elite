@@ -1,5 +1,5 @@
 # Put your backend project here
 
-Don't forget to include a seeding script and instructions on how to launch the project. List external dependencies (e.g., MongoDB running on a specific port).
+Instructions to launch the project can be found in NOTES.md. Ignore the README belonging to the backend, because it's outdated.
 
 Backend taken from norsto's oblig 3
