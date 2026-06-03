@@ -197,8 +197,7 @@ Log in with one of the seeded admin accounts (both have password `password123`):
 - **Tournament round logic**: Tournaments can be created, joined, and cancelled, but rounds do not progress automatically. There is no random-pairing or auto-start of games between tournament rounds.
 - **Tournament ELO/points after tournament end**: End-of-tournament standings and point awards are not calculated.
 - **Admin tournament creation/edit page**: The backend endpoints exist and work, but the admin frontend form for creating and editing tournaments is not built.
-- **Redirect players to game during tournament rounds**: Players are not automatically redirected from the tournament page to their assigned game when a round starts.
-- **Tournament countdown**: The countdown timer to the next round on the tournament page is not wired up.
+- **Redirect players to game during tournament rounds**: The frontend listens for `tournament_game_ready` and navigates automatically, but the backend never emits this event since tournament round logic is not implemented.
 
 ### Known deviations from spec
 - **Time control**: The spec says total time for all rounds (10/30/90 seconds total). Currently the time control is per-turn (stored as seconds per turn on the game variant). The game enforces the timer correctly per turn, but the total-time interpretation is not implemented.
