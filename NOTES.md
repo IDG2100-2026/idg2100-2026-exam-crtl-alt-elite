@@ -2,9 +2,7 @@
 
 ## Starter code
 
-This project is built on top of code from the individual mandatory assignments (Obligs 1–3). The following repositories were used as starting points and have been substantially reworked and extended:
-
-- **[TODO: add whose oblig repo(s) were used as base and link them here]**
+This project is built on top of code from the individual mandatory assignments (Obligs 1–3). 
 
 All reused code has been significantly modified to fit the new shared architecture, extended with new features, and integrated into the group project.
 
@@ -15,6 +13,10 @@ We reused and modified parts of the following:
 
 - **Oblig 3 (Fullstack assignment) - Nora Storro**: Authentication flow (register/login/JWT), user model, and basic game/tournament structure were adapted from this submission. All code has been reworked to fit the new architecture and requirements.
 
+- **Oblig 1 (Sanna)**: The dice web components (`dice-poker-die`, `dice-poker-board`, `dice-poker-monitor`) were reused and adapted from the individual Oblig 1 submission.
+
+- **Oblig 3 (Sanna)**: The static pages (About Us, How to Play, Terms & Conditions, Privacy Policy) were reused and adapted from the individual Oblig 3 submission.
+
 - **In-class examples (IDG2100 Fullstack 2026)**: The auto-generated custom ID pattern (pre-validate Mongoose hook) and the core fetch wrapper (apiFetch with automatic token refresh) were adapted from in-class code. This is noted in comments in the relevant files (`game.js`, `api.js`).
 
 All reused code has been modified to fit the new architecture. Sources are noted in code comments where applicable.
@@ -24,9 +26,9 @@ All reused code has been modified to fit the new architecture. Sources are noted
 
 All team members contributed to both backend and frontend. Rough feature ownership:
 
-- **[TODO: add team member name]** - [TODO: list features]
-- **[TODO: add team member name]** - [TODO: list features]
-- **[TODO: add team member name]** - [TODO: list features]
+- **Nora Storro**: Backend architecture (auth, JWT, email verification, models, validators, WebSocket game and comment socket, admin backend, seed script), individual tournament page, login/register frontend fixes
+- **Sanna**: Static pages, user profile page, styling/dark mode/settings panel/responsive layout, game board frontend, dice web components, admin frontend pages, leaderboard page, homepage activity section, bug fixes
+- **Sabrina**: Create game page, AuthContext setup, frontend tree structure, admin page structure, tournament page restructure and styling
 
 Branch overview:
 - `feature/login-register` - Authentication (register, login, JWT, email verification)
@@ -45,7 +47,7 @@ Branch overview:
 - Node.js v18 or higher
 - npm
 - MongoDB running locally (e.g. via MongoDB Compass or `mongod`)
-- A mail service for email verification - we used [Mailtrap](https://mailtrap.io) for local testing (free tier)
+- A mail service for email verification - we used [Ethereal](https://ethereal.email) for local testing (free fake SMTP)
 
 ### Backend setup
 
@@ -64,10 +66,10 @@ DB_NAME=gameApp
 ACCESS_TOKEN_SECRET=any_long_random_string_here
 REFRESH_TOKEN_SECRET=any_other_long_random_string_here
 FRONTEND_URL=http://localhost:5173
-EMAIL_HOST=smtp.mailtrap.io
-EMAIL_PORT=2525
-EMAIL_USER=your_mailtrap_user
-EMAIL_PASS=your_mailtrap_pass
+EMAIL_HOST=smtp.ethereal.email
+EMAIL_PORT=587
+EMAIL_USER=your_ethereal_user
+EMAIL_PASS=your_ethereal_pass
 ```
 
 3. Seed the database:
@@ -154,7 +156,7 @@ Log in with one of the seeded admin accounts (both have password `password123`):
 - Game monitor in sidebar (live turn/roll/round updates via custom events)
 - Live comments via WebSocket (new comments appear without page reload)
 - Waiting room with Join button and Leave room button
-- Auto-roll for timed-out players (random dice, no re-rolls, always matches bet)
+- Auto-roll for timed-out players (random dice, no re-rolls)
 - ELO re-estimation at game end (pair-based algorithm adapted for 2–5 players)
 - Points deducted on join (buy-in), returned at game end based on final stack
 - Leaderboard (top 10, sortable by ELO / wins / win% / games played)
