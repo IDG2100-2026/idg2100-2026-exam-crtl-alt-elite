@@ -22,16 +22,25 @@ export async function getAllGames(req, res, next) {
             variantId,
             sort = "createdAt",
             order = "desc",
-            userId
+            userId,
+            rounds,
+            timeControl
         } = req.query;
 
         const filter = {};
         if (status) filter.status = status;
         if (variantId) filter.variantId = variantId;
 
-        // Filter games where a specific user is a player
-        // Uses the players array instead of playerOne/playerTwo
         if (userId) filter["players.userId"] = Number(userId);
+
+        // Filter by variant fields (rounds, timeControl), look up matching variant IDs first
+        if (rounds || timeControl) {
+            const variantFilter = {};
+            if (rounds) variantFilter.rounds = Number(rounds);
+            if (timeControl) variantFilter.timeControl = Number(timeControl);
+            const matchingVariants = await GameVariant.find(variantFilter, { _id: 1 });
+            filter.variantId = { $in: matchingVariants.map(v => v._id) };
+        }
 
         const sortOrder = order === "asc" ? 1 : -1;
 
@@ -172,7 +181,7 @@ export async function joinRoom(req, res, next) {
         // Add the player to the game
         game.players.push({
             userId: req.user.userId,
-            points: game.variantId.buyIn,
+            points: game.variantId.buyIn * 10,
             currentBet: 0,
             abandoned: false,
             rounds: []

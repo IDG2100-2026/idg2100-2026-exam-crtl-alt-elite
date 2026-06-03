@@ -1,4 +1,5 @@
 import { User } from "../models/user.js";
+import { Game } from "../models/game.js";
 import userServices from "../services/user.services.js";
 
 import {
@@ -49,10 +50,29 @@ export async function getUser(req, res, next) {
         }
 
         // Populate recentGames and trophies with full documents
-        await user.populate("recentGames"); // Swap ObjectIds for full game documents
-        await user.populate("trophies.trophyId"); // Swap trophyIds for full trophy documents
+        await user.populate("recentGames");
+        await user.populate("trophies.trophyId");
 
-        res.json(user);
+        // Wins/losses/draws in the last 30 days
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const recentFinished = await Game.find({
+            status: "finished",
+            finishedAt: { $gte: oneMonthAgo },
+            "players.userId": user.userId
+        }, { winnerId: 1 });
+
+        let winsLastMonth = 0, lossesLastMonth = 0, drawsLastMonth = 0;
+        for (const game of recentFinished) {
+            if (game.winnerId.includes(user.userId)) {
+                game.winnerId.length === 1 ? winsLastMonth++ : drawsLastMonth++;
+            } else {
+                lossesLastMonth++;
+            }
+        }
+
+        res.json({ ...user.toJSON(), winsLastMonth, lossesLastMonth, drawsLastMonth });
     } catch(err) {
         next(err);
     }
@@ -96,8 +116,8 @@ export async function updateUser(req, res, next) {
 // File validation is handled by multer middleware in the route
 export async function uploadAvatar(req, res, next) {
     try {
-        // Finding the user based on the userId
-        const user = await userServices.findUserById(req.params.id);
+        // Finding the user based on the validated userId
+        const user = await userServices.findUserById(req.validData.id);
 
         if (!user) {
             // Not found
@@ -154,6 +174,24 @@ export async function banUser(req, res, next) {
     }
 }
 
+// PUT /api/users/:id/unban
+// Admin only, lifts a ban from a user
+export async function unbanUser(req, res, next) {
+    try {
+        const user = await userServices.findUserById(req.validData.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+
+        await User.updateOne({ userId: user.userId }, { isBanned: false });
+
+        res.json({ msg: `User ${user.username} has been unbanned` });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // PUT /api/users/:id/role
 // Admin only, promotes a user to admin
 export async function makeAdmin(req, res, next) {
@@ -184,5 +222,6 @@ export default {
     updateUser,
     uploadAvatar,
     banUser,
+    unbanUser,
     makeAdmin
 };

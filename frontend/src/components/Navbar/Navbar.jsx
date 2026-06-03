@@ -42,10 +42,13 @@ export default function NavBar() {
       <div className={Styles.links}>
         <NavLink className={styleIt} to="/tournaments">Tournaments</NavLink>
         <NavLink className={styleIt} to="/lobby">Lobby</NavLink>
+        <NavLink className={styleIt} to="/leaderboard">Leaderboard</NavLink>
         <NavLink className={styleIt} to="/howToPlay">How to play</NavLink>
-        <NavLink className={styleIt} to="/about">About</NavLink>
         {user ? (
           <>
+            {user.role === 'admin' && (
+              <NavLink className={Styles.adminBtn} to="/admin">Admin</NavLink>
+            )}
             <Link to={`/profile/${user.userId}`} className={Styles["nav-element"]}>Hi, {user.username}</Link>
             <button className={Styles["nav-element"]} onClick={handleLogout}>Log out</button>
           </>
@@ -66,7 +69,7 @@ export default function NavBar() {
       </button>
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 
-      {/* Hamburger button — mobile only */}
+      {/* Hamburger button, mobile only */}
       <button
         className={Styles.hamburger}
         onClick={() => setOpen(o => !o)}
@@ -82,10 +85,13 @@ export default function NavBar() {
         <div className={Styles.mobileMenu}>
           <NavLink className={styleIt} to="/tournaments" onClick={close}>Tournaments</NavLink>
           <NavLink className={styleIt} to="/lobby" onClick={close}>Lobby</NavLink>
+          <NavLink className={styleIt} to="/leaderboard" onClick={close}>Leaderboard</NavLink>
           <NavLink className={styleIt} to="/howToPlay" onClick={close}>How to play</NavLink>
-          <NavLink className={styleIt} to="/about" onClick={close}>About</NavLink>
           {user ? (
             <>
+              {user.role === 'admin' && (
+                <NavLink className={Styles.adminBtn} to="/admin" onClick={close}>Admin</NavLink>
+              )}
               <Link to={`/profile/${user.userId}`} className={Styles["nav-element"]} onClick={close}>Hi, {user.username}</Link>
               <button className={Styles["nav-element"]} onClick={handleLogout}>Log out</button>
             </>

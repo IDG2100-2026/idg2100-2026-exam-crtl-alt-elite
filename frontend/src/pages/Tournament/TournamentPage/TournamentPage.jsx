@@ -143,7 +143,7 @@ function OngoingGames({ tournamentId }) {
                         className="button button-secondary"
                         onClick={() => navigate(`/games/${game.gameId}`)}
                     >
-                        Game {game.gameId} — {game.status}
+                        Game {game.gameId} - {game.status}
                     </button>
                 </li>
             ))}

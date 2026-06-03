@@ -128,7 +128,7 @@ export const authApi = {
         apiPost("/auth/register", userData),
 
     login: async (credentials) => {
-        // retry=true skips the refresh-on-401 logic — a 401 here means wrong credentials
+        // retry=true skips the refresh-on-401 logic, a 401 here means wrong credentials
         const data = await apiFetch("/auth/login", {
             method: "POST",
             body: JSON.stringify(credentials)
@@ -167,6 +167,9 @@ export const userApi = {
 
     ban: (targetId) =>
         apiPut(`/users/${targetId}/ban`, {}),
+
+    unban: (targetId) =>
+        apiPut(`/users/${targetId}/unban`, {}),
 
     makeAdmin: (targetId) =>
         apiPut(`/users/${targetId}/role`, {}),

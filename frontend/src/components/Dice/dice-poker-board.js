@@ -165,7 +165,7 @@ class DicePokerBoard extends HTMLElement {
     `;
   }
 
-  // Create 5 dice for a player — all start disabled
+  // Create 5 dice for a player, all start disabled
   createDice(playerKey) {
     const container = this.shadowRoot.getElementById(`${playerKey}-dice`);
     for (let i = 0; i < 5; i++) {
@@ -245,7 +245,7 @@ class DicePokerBoard extends HTMLElement {
     });
   }
 
-  // Start a new round — reset both players' dice faces
+  // Start a new round, reset both players' dice faces
   startRound() {
     if (this.gameOver) return;
 
@@ -280,7 +280,7 @@ class DicePokerBoard extends HTMLElement {
     if (el) el.style.display = "none";
   }
 
-  // Start a player's turn — player must click Roll up to 3 times manually
+  // Start a player's turn, player must click Roll up to 3 times manually
   startTurn(playerKey) {
     this.activePlayer = playerKey;
     this.rollsRemaining = 3;
@@ -325,7 +325,7 @@ class DicePokerBoard extends HTMLElement {
       this.showSection("player2");
       this.startTurn("player2");
     } else {
-      // Both turns done — reveal both sections for round result
+      // Both turns done, reveal both sections for round result
       this.showSection("player1");
       this.showSection("player2");
       this.evaluateRound();
@@ -396,7 +396,7 @@ class DicePokerBoard extends HTMLElement {
     return { handType: "Carta Alta (High Card)", rank: 8, faces, tieBreakers: faceValues.sort((a, b) => a - b) };
   }
 
-  // Compare two hands — return "player1", "player2", or "tie"
+  // Compare two hands, return "player1", "player2", or "tie"
   compareHands(hand1, hand2) {
     if (hand1.rank !== hand2.rank) {
       return hand1.rank < hand2.rank ? "player1" : "player2";
@@ -426,7 +426,7 @@ class DicePokerBoard extends HTMLElement {
     this.scores[roundWinner]++;
 
     const breakdown = result === "tie"
-      ? `Tie — both had ${hand1.handType}. ${this.player1Name} wins the round.`
+      ? `Tie, both had ${hand1.handType}. ${this.player1Name} wins the round.`
       : `${roundWinner === "player1" ? this.player1Name : this.player2Name} wins with ${roundWinner === "player1" ? hand1.handType : hand2.handType}`;
 
     this.dispatchEvent(new CustomEvent("dp:round-decided", {
@@ -441,7 +441,7 @@ class DicePokerBoard extends HTMLElement {
       }
     }));
 
-    // Read bestof from attribute — supports 3, 5, or 7
+    // Read bestof from attribute, supports 3, 5, or 7
     const bestOf = parseInt(this.getAttribute("bestof")) || 3;
     const winsNeeded = Math.ceil(bestOf / 2);
 

@@ -1,4 +1,4 @@
-# Spanish Poker Dice Platform — Backend
+# Spanish Poker Dice Platform - Backend
 
 A Node.js/Express/MongoDB REST API for the Spanish Poker Dice platform, built as part of IDG2100 Fullstack 2026.
 

@@ -37,8 +37,9 @@ export default function TournamentList() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Failed: {error}</p>;
 
-  const upcoming = tournaments.filter(t => t.status !== "finished");
+  const upcoming = tournaments.filter(t => t.status === "upcoming" || t.status === "ongoing");
   const past = tournaments.filter(t => t.status === "finished");
+  const cancelled = tournaments.filter(t => t.status === "cancelled");
 
  return (
   <div className={styles.tournamentListPage}>
@@ -73,22 +74,33 @@ export default function TournamentList() {
     <section className={styles.section}>
       <h3 className={styles.sectionTitle}>Upcoming & Ongoing</h3>
 
-      <div className={styles.cardGrid}>
-        {upcoming.map(t => (
-          <TournamentCard key={t._id} tournament={t} />
-        ))}
-      </div>
+      {upcoming.length === 0
+        ? <p className={styles.empty}>No upcoming tournaments.</p>
+        : <div className={styles.cardGrid}>
+            {upcoming.map(t => <TournamentCard key={t._id} tournament={t} />)}
+          </div>
+      }
     </section>
 
     <section className={styles.section}>
       <h3 className={styles.sectionTitle}>Finished</h3>
 
-      <div className={styles.cardGrid}>
-        {past.map(t => (
-          <TournamentCard key={t._id} tournament={t} />
-        ))}
-      </div>
+      {past.length === 0
+        ? <p className={styles.empty}>No finished tournaments yet.</p>
+        : <div className={styles.cardGrid}>
+            {past.map(t => <TournamentCard key={t._id} tournament={t} />)}
+          </div>
+      }
     </section>
+
+    {cancelled.length > 0 && (
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Cancelled</h3>
+        <div className={styles.cardGrid}>
+          {cancelled.map(t => <TournamentCard key={t._id} tournament={t} />)}
+        </div>
+      </section>
+    )}
 
     {page < totalPages && (
       <button className={styles.loadMore} onClick={() => setPage(p => p + 1)}>

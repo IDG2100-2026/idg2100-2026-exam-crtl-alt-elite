@@ -19,6 +19,16 @@ export function registerGameHandlers(io, socket) {
 
             const isPlayer = game.players.some(p => p.userId === socket.user?.userId);
 
+            // Reset abandoned flag if player reconnects after disconnect
+            if (isPlayer) {
+                const player = game.players.find(p => p.userId === socket.user?.userId);
+                if (player?.abandoned) {
+                    player.abandoned = false;
+                    game.markModified("players");
+                    await game.save();
+                }
+            }
+
             if (!isPlayer && socket.user?.role !== "anonymous") {
                 socket.isSpectator = true;
             }
@@ -72,6 +82,21 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
+    // Player updates which dice they are holding, broadcast count to others
+    // Values are never revealed, only positions are shared (spec line 73)
+    socket.on("hold_dice", async ({ gameId, holds }) => {
+        try {
+            if (socket.isSpectator || !socket.user?.userId) return;
+            const validHolds = (holds || []).filter(i => i >= 0 && i <= 4);
+            socket.to(`game:${gameId}`).emit("holds_update", {
+                userId: socket.user.userId,
+                holds: validHolds
+            });
+        } catch (err) {
+            console.error("hold_dice error:", err.message);
+        }
+    });
+
     // Player sends a bet action during the betting phase
     socket.on("place_bet", async ({ gameId, action, amount }) => {
         try {
@@ -85,7 +110,7 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player disconnects — grace period before marking as abandoned
+    // Player disconnects, grace period before marking as abandoned
     socket.on("disconnect", async () => {
         try {
             if (!socket.gameId || !socket.user?.userId) return;
@@ -130,7 +155,7 @@ export function registerGameHandlers(io, socket) {
                 } catch (err) {
                     console.error("disconnect grace period error:", err.message);
                 }
-            }, 10000);
+            }, 30000);
 
         } catch (err) {
             console.error("disconnect error:", err.message);

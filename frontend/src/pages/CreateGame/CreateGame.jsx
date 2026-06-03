@@ -1,5 +1,5 @@
 // Reused on code from Nora Storro (Fullstack assignment 3)
-import { useMemo, useState, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useFetch } from "../../hooks/useFetch.js";
 import { gameApi, variantApi } from "../../api/api.js";
@@ -13,7 +13,7 @@ export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Selected variant options
+    // Selected variant options, null means "use default from loaded variants"
     const [selectedRounds, setSelectedRounds] = useState(null);
     const [selectedStraights, setSelectedStraights] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -32,29 +32,31 @@ export default function CreateGame() {
     const numPlayersOptions = [...new Set(variants?.map(v => v.numPlayers) ?? [])].sort((a, b) => a - b);
     const buyInOptions = [...new Set(variants?.map(v => v.buyIn) ?? [])].sort((a, b) => a - b);
 
-    // Find the variant that matches all selected options
-    // Memoized to avoid recalculating on every render
-    // (inspired by: https://www.youtube.com/watch?v=vpE9I_eqHdM&t=592s)
-    const selectedVariant = useMemo(() => {
-        if (!variants) return null;
+    // Derive effective values, user override takes priority, first option is the default
+    const effectiveRounds = selectedRounds ?? roundOptions[0] ?? null;
+    const effectiveStraights = selectedStraights ?? true;
+    const effectiveTime = selectedTime ?? timeOptions[0] ?? null;
+    const effectiveNumPlayers = selectedNumPlayers ?? numPlayersOptions[0] ?? null;
+    const effectiveBuyIn = selectedBuyIn ?? buyInOptions[0] ?? null;
 
-        return variants.find(v =>
-            v.rounds === selectedRounds &&
-            v.straightsAllowed === selectedStraights &&
-            v.timeControl === selectedTime &&
-            v.numPlayers === selectedNumPlayers &&
-            v.buyIn === selectedBuyIn
-        );
-    }, [variants, selectedRounds, selectedStraights, selectedTime, selectedNumPlayers, selectedBuyIn]);
+    // Find the variant that matches all selected options
+    // (inspired by: https://www.youtube.com/watch?v=vpE9I_eqHdM&t=592s)
+    const selectedVariant = variants?.find(v =>
+        v.rounds === effectiveRounds &&
+        v.straightsAllowed === effectiveStraights &&
+        v.timeControl === effectiveTime &&
+        v.numPlayers === effectiveNumPlayers &&
+        v.buyIn === effectiveBuyIn
+    ) ?? null;
 
     const isFormComplete =
-        selectedRounds !== null &&
-        selectedStraights !== null &&
-        selectedTime !== null &&
-        selectedNumPlayers !== null &&
-        selectedBuyIn !== null;
+        effectiveRounds !== null &&
+        effectiveStraights !== null &&
+        effectiveTime !== null &&
+        effectiveNumPlayers !== null &&
+        effectiveBuyIn !== null;
 
-    const handleSubmit = useCallback(async (e) => {
+    async function handleSubmit(e) {
         e.preventDefault();
         setError(null);
 
@@ -81,7 +83,7 @@ export default function CreateGame() {
         } finally {
             setLoading(false);
         }
-    }, [selectedVariant, user, navigate]);
+    }
 
     return (
         <div className={styles.createGameContainer}>
@@ -99,7 +101,7 @@ export default function CreateGame() {
                                 <button
                                     key={r}
                                     type="button"
-                                    className={`${styles.toggleBtn} ${selectedRounds === r ? styles.toggleBtnActive : ""}`}
+                                    className={`${styles.toggleBtn} ${effectiveRounds === r ? styles.toggleBtnActive : ""}`}
                                     onClick={() => setSelectedRounds(r)}
                                 >
                                     Best of {r}
@@ -114,14 +116,14 @@ export default function CreateGame() {
                         <div className={styles.toggleGroup}>
                             <button
                                 type="button"
-                                className={`${styles.toggleBtn} ${selectedStraights === true ? styles.toggleBtnActive : ""}`}
+                                className={`${styles.toggleBtn} ${effectiveStraights === true ? styles.toggleBtnActive : ""}`}
                                 onClick={() => setSelectedStraights(true)}
                             >
                                 Allowed
                             </button>
                             <button
                                 type="button"
-                                className={`${styles.toggleBtn} ${selectedStraights === false ? styles.toggleBtnActive : ""}`}
+                                className={`${styles.toggleBtn} ${effectiveStraights === false ? styles.toggleBtnActive : ""}`}
                                 onClick={() => setSelectedStraights(false)}
                             >
                                 Not allowed
@@ -137,7 +139,7 @@ export default function CreateGame() {
                                 <button
                                     key={t}
                                     type="button"
-                                    className={`${styles.toggleBtn} ${selectedTime === t ? styles.toggleBtnActive : ""}`}
+                                    className={`${styles.toggleBtn} ${effectiveTime === t ? styles.toggleBtnActive : ""}`}
                                     onClick={() => setSelectedTime(t)}
                                 >
                                     {t}s
@@ -154,7 +156,7 @@ export default function CreateGame() {
                                 <button
                                     key={n}
                                     type="button"
-                                    className={`${styles.toggleBtn} ${selectedNumPlayers === n ? styles.toggleBtnActive : ""}`}
+                                    className={`${styles.toggleBtn} ${effectiveNumPlayers === n ? styles.toggleBtnActive : ""}`}
                                     onClick={() => setSelectedNumPlayers(n)}
                                 >
                                     {n} players
@@ -171,7 +173,7 @@ export default function CreateGame() {
                                 <button
                                     key={b}
                                     type="button"
-                                    className={`${styles.toggleBtn} ${selectedBuyIn === b ? styles.toggleBtnActive : ""}`}
+                                    className={`${styles.toggleBtn} ${effectiveBuyIn === b ? styles.toggleBtnActive : ""}`}
                                     onClick={() => setSelectedBuyIn(b)}
                                 >
                                     {b} pts

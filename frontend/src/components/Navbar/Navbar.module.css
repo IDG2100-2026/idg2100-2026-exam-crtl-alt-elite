@@ -50,6 +50,24 @@
   font-weight: 600;
 }
 
+.adminBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--brand-green-dark);
+  color: #fff;
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.adminBtn:hover {
+  background: var(--brand-green-darker);
+}
+
 .loginBtn {
   padding: 6px 14px;
   border-radius: 8px;

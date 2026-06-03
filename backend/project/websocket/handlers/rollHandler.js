@@ -23,7 +23,9 @@ export async function handleRoll(io, game) {
         roundNumber: game.currentRound,
         phase: "rolling",
         currentTurnUserId: firstPlayer.userId,
-        expiresAt
+        expiresAt,
+        // Include player stacks so frontend can sync points after round end
+        players: game.players.map(p => ({ userId: p.userId, points: p.points }))
     });
 
     startTurnTimer(io, game, timeMs);
@@ -41,12 +43,13 @@ export async function doRoll(io, game, holds) {
 
     let newRolls;
     if (!currentRound || !currentRound.rolls.length || game.rollsUsed === 0) {
-        // First roll of this turn — roll all 5 dice
+        // First roll of this turn, roll all 5 dice
         newRolls = rollDice();
     } else {
         // Re-roll: keep held dice, randomise the rest
+        const POKER_FACES = ["7", "8", "J", "Q", "K", "A"];
         newRolls = currentRound.rolls.map((val, i) =>
-            holds.includes(i) ? val : Math.floor(Math.random() * 6) + 1
+            holds.includes(i) ? val : POKER_FACES[Math.floor(Math.random() * POKER_FACES.length)]
         );
     }
 
@@ -94,7 +97,7 @@ export async function doRoll(io, game, holds) {
     });
 
     if (game.rollsUsed >= ROLLS_PER_TURN) {
-        // All 3 rolls used — auto-end after a short pause
+        // All 3 rolls used, auto-end after a short pause
         clearTurnTimer(game.gameId);
         setTimeout(() => endTurn(io, game.gameId), 2500);
     } else {
@@ -109,7 +112,10 @@ export async function handleReRoll(io, socket, gameId, holds) {
     if (!game || game.status !== "ongoing") return socket.emit("error", { msg: "Game not active" });
     if (game.currentPhase !== "rolling") return socket.emit("error", { msg: "Not the rolling phase" });
     if (game.currentTurnUserId !== socket.user.userId) return socket.emit("error", { msg: "It is not your turn" });
-    if (game.rollsUsed >= ROLLS_PER_TURN) return socket.emit("error", { msg: "No rolls remaining" });
+    
+    // Use 0 as fallback in case rollsUsed is undefined or stale
+    const rollsUsed = game.rollsUsed ?? 0;
+    if (rollsUsed >= ROLLS_PER_TURN) return socket.emit("error", { msg: "No rolls remaining" });
 
     const validHolds = (holds || []).filter(i => i >= 0 && i <= 4);
     await doRoll(io, game, validHolds);
@@ -122,6 +128,18 @@ export async function endTurn(io, gameId) {
     if (!game || game.status !== "ongoing" || game.currentPhase !== "rolling") return;
 
     clearTurnTimer(gameId);
+
+    console.log("endTurn called for game:", gameId);
+    console.log("currentTurnUserId:", game.currentTurnUserId);
+    console.log("currentRound:", game.currentRound);
+    console.log("players:", game.players.map(p => ({
+        userId: p.userId,
+        abandoned: p.abandoned,
+        rounds: p.rounds.filter(r => r.roundNumber === game.currentRound).map(r => ({
+            roundNumber: r.roundNumber,
+            rollsLength: r.rolls?.length
+        }))
+    })));
 
     // If the current player hasn't rolled at all (timed out), give them a random hand
     const currentPlayer = game.players.find(p => p.userId === game.currentTurnUserId);
@@ -152,11 +170,13 @@ export async function endTurn(io, gameId) {
     if (nextPlayer) {
         game.currentTurnUserId = nextPlayer.userId;
         game.rollsUsed = 0;
+        game.markModified("players");
         await game.save();
 
         const timeMs = (game.variantId?.timeControl || 30) * 1000;
         const expiresAt = Date.now() + timeMs;
 
+        // Emit after save to ensure DB state matches what we tell the frontend
         io.to(`game:${gameId}`).emit("turn_update", {
             currentTurnUserId: nextPlayer.userId,
             rollsUsed: 0,
@@ -167,7 +187,7 @@ export async function endTurn(io, gameId) {
 
         startTurnTimer(io, game, timeMs);
     } else {
-        // All players have rolled — start betting
+        // All players have rolled, start betting
         game.currentPhase = "betting";
         game.currentTurnUserId = null;
         game.rollsUsed = 0;

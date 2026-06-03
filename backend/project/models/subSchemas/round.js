@@ -37,14 +37,13 @@ export const roundSchema = new mongoose.Schema({
         min: 1
     },
 
-    // The dice values rolled in this round (5 dice, values 1-6, the values will be related to the die faces)
+    // The dice values rolled in this round (5 poker dice: 7, 8, J, Q, K, A)
     // Only the backend knows all players' rolls until reveal
     rolls: {
-        // type has to be Number in an array, because there's 5 dice
-        type: [Number],
+        type: [String],
         validate: {
-            validator: (arr) => arr.every(die => die >= 1 && die <= 6),
-            message: "Dice values must be between 1 and 6"
+            validator: (arr) => arr.every(die => ["7", "8", "J", "Q", "K", "A"].includes(die)),
+            message: "Dice values must be valid poker faces (7, 8, J, Q, K, A)"
         }
     },
 

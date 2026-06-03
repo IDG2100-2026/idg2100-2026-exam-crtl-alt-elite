@@ -23,9 +23,11 @@ userRouter.put("/:id",
 );
 // /api/users/:id/avatar
 userRouter.put(
-    "/:id/avatar", 
-    requireUser, 
-    uploadMiddleware.uploadAvatar.single("avatar"), 
+    "/:id/avatar",
+    requireUser,
+    userValidator.validateUserId(),
+    validate,
+    uploadMiddleware.uploadAvatar.single("avatar"),
     userController.uploadAvatar
 );
 
@@ -34,6 +36,8 @@ userRouter.put(
 userRouter.get("/", requireAdmin, userValidator.validateGetUsers(), validate, userController.getAllUsers);
 // /api/users/:id/ban
 userRouter.put("/:id/ban", requireAdmin, userValidator.validateUserId(), validate, userController.banUser);
+// /api/users/:id/unban
+userRouter.put("/:id/unban", requireAdmin, userValidator.validateUserId(), validate, userController.unbanUser);
 // /api/users/:id/role
 userRouter.put("/:id/role", requireAdmin, userValidator.validateUserId(), validate, userController.makeAdmin);
 

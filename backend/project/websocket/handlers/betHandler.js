@@ -35,6 +35,9 @@ export async function handleBet(io, socket, gameId, action, amount) {
         case "bet":
             // Opening bet, must be more than 0
             // Only valid when no one has bet yet
+            if (highestBet !== 0) {
+                return socket.emit("error", { msg: "Someone has already opened the betting, use raise or match instead" });
+            }
             if (amount <= 0) {
                 return socket.emit("error", { msg: "Bet amount must be more than 0" });
             }
@@ -46,20 +49,23 @@ export async function handleBet(io, socket, gameId, action, amount) {
             game.pot += amount;
             break;
 
-        case "raise":
+        case "raise": {
             // Must bet strictly more than the current highest bet
             if (amount <= highestBet) {
                 return socket.emit("error", {
                     msg: `You must raise above the current highest bet of ${highestBet}`
                 });
             }
-            if (amount > player.points) {
+            // Player already paid currentBet earlier this round, only charge the difference
+            const raiseDiff = amount - player.currentBet;
+            if (raiseDiff > player.points) {
                 return socket.emit("error", { msg: "You don't have enough points" });
             }
-            player.points -= amount;
+            player.points -= raiseDiff;
             player.currentBet = amount;
-            game.pot += amount;
+            game.pot += raiseDiff;
             break;
+        }
         
         case "match": {
             // Curly braces added to allow const declarations in case block
@@ -77,13 +83,16 @@ export async function handleBet(io, socket, gameId, action, amount) {
                     action: "fold"
                 });
                 await game.save();
+
+                // Include player points so frontend stays in sync
                 io.to(`game:${gameId}`).emit("bet_update", {
                     userId: socket.user.userId,
                     action: "fold",
                     amount: 0,
                     pot: game.pot,
                     roundNumber: game.currentRound,
-                    forcedFold: true
+                    forcedFold: true,
+                    players: game.players.map(p => ({ userId: p.userId, points: p.points }))
                 });
 
                 // Check if betting is complete after forced fold
@@ -127,12 +136,14 @@ export async function handleBet(io, socket, gameId, action, amount) {
     await game.save();
 
     // Broadcast the bet to all players
+    // Include updated player points so frontend stays in sync and avoids drift
     io.to(`game:${gameId}`).emit("bet_update", {
         userId: socket.user.userId,
         action,
         amount: action === "fold" ? 0 : amount,
         pot: game.pot,
-        roundNumber: game.currentRound
+        roundNumber: game.currentRound,
+        players: game.players.map(p => ({ userId: p.userId, points: p.points }))
     });
 
     // Recalculate highest bet after the action since a raise may have changed it
