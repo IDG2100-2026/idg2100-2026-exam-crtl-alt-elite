@@ -1,4 +1,3 @@
-// Monitor component, displays live game state by listening to board events
 class DicePokerMonitor extends HTMLElement {
   static observedAttributes = ["player1", "player2"];
 
@@ -18,7 +17,6 @@ class DicePokerMonitor extends HTMLElement {
     this.player1Name = "Player 1";
     this.player2Name = "Player 2";
 
-    // Keep references so listeners can be removed in disconnectedCallback
     this._handlers = {
       roundStart:    (e) => { this.currentRound = e.detail.round; this.roundWinner = ""; this.matchChampion = ""; this.render(); },
       turnChanged:   (e) => { this.activePlayer = e.detail.player; this.remainingRolls = e.detail.remainingRolls; this.render(); },
@@ -33,7 +31,6 @@ class DicePokerMonitor extends HTMLElement {
     this.player2Name = this.getAttribute("player2") || "Player 2";
     this.render();
 
-    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
     document.addEventListener("dp:round-start",   this._handlers.roundStart);
     document.addEventListener("dp:turn-changed",  this._handlers.turnChanged);
     document.addEventListener("dp:roll-executed", this._handlers.rollExecuted);
@@ -41,7 +38,6 @@ class DicePokerMonitor extends HTMLElement {
     document.addEventListener("dp:match-decided", this._handlers.matchDecided);
   }
 
-  // Remove listeners when unmounted to prevent accumulation on React re-renders
   disconnectedCallback() {
     document.removeEventListener("dp:round-start",   this._handlers.roundStart);
     document.removeEventListener("dp:turn-changed",  this._handlers.turnChanged);

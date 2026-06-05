@@ -1,4 +1,3 @@
-// General idea taken from inclass code from IDG2100 Fullstack 2026
 import express from "express";
 
 const nonApiRouter = express.Router();

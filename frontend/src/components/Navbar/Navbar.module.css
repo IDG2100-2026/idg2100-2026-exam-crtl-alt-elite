@@ -117,7 +117,6 @@
   background: rgba(26, 71, 48, 0.08);
 }
 
-/* Hamburger */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -143,7 +142,6 @@
 .bar2Open { opacity: 0; }
 .bar3Open { transform: translateY(-7px) rotate(-45deg); }
 
-/* Mobile menu */
 .mobileMenu {
   display: none;
   position: absolute;
@@ -158,7 +156,6 @@
   z-index: 99;
 }
 
-/* Dark mode */
 [data-theme="dark"] .nav-element {
   color: var(--dark-link);
 }

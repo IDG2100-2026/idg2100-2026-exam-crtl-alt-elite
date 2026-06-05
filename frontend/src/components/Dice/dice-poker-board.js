@@ -1,9 +1,6 @@
-// Main game board component
 class DicePokerBoard extends HTMLElement {
-  // https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#responding_to_attribute_changes
   static observedAttributes = ["player1", "player2", "bestof", "include-straight"];
 
-  // Face ranking
   static FACE_ORDER = ["A", "K", "Q", "J", "8", "7"];
 
   constructor() {
@@ -14,7 +11,6 @@ class DicePokerBoard extends HTMLElement {
 
     this.currentRound = 0;
     this.activePlayer = null;
-    // Each turn: 1 automatic roll + 2 optional rerolls = 3 total
     this.rollsRemaining = 0;
     this.scores = { player1: 0, player2: 0 };
     this.gameOver = false;
@@ -27,12 +23,10 @@ class DicePokerBoard extends HTMLElement {
     this.createDice("player1");
     this.createDice("player2");
     this.setupClickListeners();
-    // All dice start disabled until a turn begins
     this.setDiceDisabled("player1", true);
     this.setDiceDisabled("player2", true);
   }
 
-  // Update player name labels and re-read variant settings when attributes change
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
@@ -45,7 +39,6 @@ class DicePokerBoard extends HTMLElement {
       const el = this.shadowRoot?.querySelector(".player2-heading");
       if (el) el.textContent = this.player2Name;
     }
-    // bestof and include-straight are read via getAttribute() when needed
   }
 
   render() {
@@ -165,7 +158,6 @@ class DicePokerBoard extends HTMLElement {
     `;
   }
 
-  // Create 5 dice for a player, all start disabled
   createDice(playerKey) {
     const container = this.shadowRoot.getElementById(`${playerKey}-dice`);
     for (let i = 0; i < 5; i++) {
@@ -179,7 +171,6 @@ class DicePokerBoard extends HTMLElement {
     }
   }
 
-  // Enable or disable all dice for a player
   setDiceDisabled(playerKey, disabled) {
     this.diceByPlayer[playerKey].forEach(die => {
       if (disabled) {
@@ -190,7 +181,6 @@ class DicePokerBoard extends HTMLElement {
     });
   }
 
-  // Reset all dice faces to default and remove holds
   resetDiceFaces(playerKey) {
     this.diceByPlayer[playerKey].forEach(die => {
       die.removeAttribute("held");
@@ -198,7 +188,6 @@ class DicePokerBoard extends HTMLElement {
     });
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
   setupClickListeners() {
     this.shadowRoot.getElementById("start-game-btn").addEventListener("click", () => {
       this.startRound();
@@ -245,20 +234,17 @@ class DicePokerBoard extends HTMLElement {
     });
   }
 
-  // Start a new round, reset both players' dice faces
   startRound() {
     if (this.gameOver) return;
 
     this.currentRound++;
 
-    // Reset faces AND holds for both players so old results aren't shown
     this.resetDiceFaces("player1");
     this.resetDiceFaces("player2");
 
     this.shadowRoot.getElementById("next-round-btn").style.display = "none";
     this.shadowRoot.getElementById("start-game-btn").style.display = "none";
 
-    // Show only player 1 at the start of each round
     this.showSection("player1");
     this.hideSection("player2");
 
@@ -280,7 +266,6 @@ class DicePokerBoard extends HTMLElement {
     if (el) el.style.display = "none";
   }
 
-  // Start a player's turn, player must click Roll up to 3 times manually
   startTurn(playerKey) {
     this.activePlayer = playerKey;
     this.rollsRemaining = 3;
@@ -288,7 +273,6 @@ class DicePokerBoard extends HTMLElement {
 
     const other = playerKey === "player1" ? "player2" : "player1";
     this.setDiceDisabled(other, true);
-    // Dice start disabled until first roll so player can't hold unheld dice
     this.setDiceDisabled(playerKey, true);
 
     this.updateButtonStates();
@@ -299,12 +283,10 @@ class DicePokerBoard extends HTMLElement {
     }));
   }
 
-  // Handle each roll click
   executeReroll(playerKey) {
     this.rollDice(this.diceByPlayer[playerKey]);
     this.rollsRemaining--;
     this.hasRolled = true;
-    // Enable dice holding after first roll
     this.setDiceDisabled(playerKey, false);
     this.emitRollExecuted(playerKey);
     this.updateButtonStates();
@@ -320,19 +302,16 @@ class DicePokerBoard extends HTMLElement {
     this.updateButtonStates();
 
     if (playerKey === "player1") {
-      // Switch view to player 2
       this.hideSection("player1");
       this.showSection("player2");
       this.startTurn("player2");
     } else {
-      // Both turns done, reveal both sections for round result
       this.showSection("player1");
       this.showSection("player2");
       this.evaluateRound();
     }
   }
 
-  // Evaluate a poker hand and return rank info
   evaluateHand(faces) {
     const faceOrder = DicePokerBoard.FACE_ORDER;
     const freq = {};
@@ -363,7 +342,6 @@ class DicePokerBoard extends HTMLElement {
       return { handType: "Full (Full House)", rank: 3, faces, tieBreakers: [faceOrder.indexOf(trip), faceOrder.indexOf(pair)] };
     }
 
-    // Check straights only when the attribute allows it
     if (counts[0] === 1) {
       const sortedFaces = [...faces].sort((a, b) => faceOrder.indexOf(a) - faceOrder.indexOf(b));
       const straight1 = ["7", "8", "J", "Q", "K"];
@@ -396,7 +374,6 @@ class DicePokerBoard extends HTMLElement {
     return { handType: "Carta Alta (High Card)", rank: 8, faces, tieBreakers: faceValues.sort((a, b) => a - b) };
   }
 
-  // Compare two hands, return "player1", "player2", or "tie"
   compareHands(hand1, hand2) {
     if (hand1.rank !== hand2.rank) {
       return hand1.rank < hand2.rank ? "player1" : "player2";
@@ -410,7 +387,6 @@ class DicePokerBoard extends HTMLElement {
     return "tie";
   }
 
-  // Evaluate both players' hands and determine round winner
   evaluateRound() {
     this.activePlayer = null;
     this.updateButtonStates();
@@ -441,7 +417,6 @@ class DicePokerBoard extends HTMLElement {
       }
     }));
 
-    // Read bestof from attribute, supports 3, 5, or 7
     const bestOf = parseInt(this.getAttribute("bestof")) || 3;
     const winsNeeded = Math.ceil(bestOf / 2);
 
@@ -462,7 +437,6 @@ class DicePokerBoard extends HTMLElement {
         this.currentRound = 0;
         this.gameOver = false;
         btn.textContent = "Next Round";
-        // Reset both players' dice faces before starting fresh
         this.resetDiceFaces("player1");
         this.resetDiceFaces("player2");
         this.startRound();

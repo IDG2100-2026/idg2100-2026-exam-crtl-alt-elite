@@ -1,5 +1,3 @@
-// copied from oblig 3 
-
 import styles from './StaticPage.module.css';
 
 export default function AboutPage() {

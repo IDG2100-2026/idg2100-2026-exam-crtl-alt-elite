@@ -2,8 +2,6 @@ import { body, param, query } from "express-validator";
 import { validatePagination } from "./pagination.validator.js";
 import { MIN_ID } from "../config/constants.js";
 
-// Validates the gameId route parameter
-// Used in getGame, joinRoom and leaveRoom
 export function validateGameId() {
     return [
         param("id")
@@ -14,11 +12,9 @@ export function validateGameId() {
     ];
 }
 
-// GET /api/games
-// Validates query parameters for getting all games
 export function validateGetGames() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("status")
             .optional()
@@ -48,8 +44,6 @@ export function validateGetGames() {
     ];
 }
 
-// POST /api/games
-// Validates the request body for creating a game room
 export function validateCreateRoom() {
     return [
         body("variantId")

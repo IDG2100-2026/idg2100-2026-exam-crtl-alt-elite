@@ -7,7 +7,6 @@ import { clearTurnTimer, clearBettingTimer } from "../utils/gameTimer.js";
 
 export function registerGameHandlers(io, socket) {
 
-    // Player joins a game's Socket.io room
     socket.on("join_game", async (gameId) => {
         try {
             const game = await Game.findOne({ gameId: Number(gameId) })
@@ -19,7 +18,6 @@ export function registerGameHandlers(io, socket) {
 
             const isPlayer = game.players.some(p => p.userId === socket.user?.userId);
 
-            // Reset abandoned flag if player reconnects after disconnect
             if (isPlayer) {
                 const player = game.players.find(p => p.userId === socket.user?.userId);
                 if (player?.abandoned) {
@@ -36,12 +34,10 @@ export function registerGameHandlers(io, socket) {
             socket.gameId = gameId;
             socket.join(`game:${gameId}`);
 
-            // Send filtered game state to the joining user
             const gameObj = game.toObject();
             gameObj.players = filterRollsForUser(gameObj.players, socket.user?.userId || null);
             socket.emit("game_state", gameObj);
 
-            // Restore game state for reconnecting players
             if (game.status === "ongoing" && isPlayer) {
                 sendCurrentRollToReconnectingPlayer(socket, game);
             }
@@ -52,8 +48,6 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player requests a re-roll, sending which dice they want to keep
-    // holds: array of die indices (0-4) to keep
     socket.on("roll_dice", async ({ gameId, holds }) => {
         try {
             if (socket.isSpectator || socket.user?.role === "anonymous") {
@@ -66,7 +60,6 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player explicitly ends their turn before using all 3 rolls
     socket.on("end_turn", async ({ gameId }) => {
         try {
             if (socket.isSpectator || socket.user?.role === "anonymous") return;
@@ -74,7 +67,7 @@ export function registerGameHandlers(io, socket) {
             const game = await Game.findOne({ gameId: Number(gameId) });
             if (!game || game.status !== "ongoing" || game.currentPhase !== "rolling") return;
             if (game.currentTurnUserId !== socket.user.userId) return;
-            if (game.rollsUsed < 1) return; // must have rolled at least once
+            if (game.rollsUsed < 1) return;
 
             await endTurn(io, gameId);
         } catch (err) {
@@ -82,8 +75,6 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player updates which dice they are holding, broadcast count to others
-    // Values are never revealed, only positions are shared (spec line 73)
     socket.on("hold_dice", async ({ gameId, holds }) => {
         try {
             if (socket.isSpectator || !socket.user?.userId) return;
@@ -97,7 +88,6 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player sends a bet action during the betting phase
     socket.on("place_bet", async ({ gameId, action, amount }) => {
         try {
             if (socket.isSpectator || socket.user?.role === "anonymous") {
@@ -110,7 +100,6 @@ export function registerGameHandlers(io, socket) {
         }
     });
 
-    // Player disconnects, grace period before marking as abandoned
     socket.on("disconnect", async () => {
         try {
             if (!socket.gameId || !socket.user?.userId) return;
@@ -120,7 +109,6 @@ export function registerGameHandlers(io, socket) {
 
             setTimeout(async () => {
                 try {
-                    // Check if the player reconnected during the grace period
                     const room = await io.in(`game:${gameId}`).fetchSockets();
                     const reconnected = room.some(s => s.user?.userId === userId);
                     if (reconnected) return;
@@ -139,12 +127,10 @@ export function registerGameHandlers(io, socket) {
                         username: socket.user.username
                     });
 
-                    // If it was this player's rolling turn, skip to next
                     if (game.currentPhase === "rolling" && game.currentTurnUserId === userId) {
                         await endTurn(io, Number(gameId));
                     }
 
-                    // Only force-end the round if no active players remain
                     const stillActive = game.players.filter(p => !p.abandoned);
                     if (stillActive.length === 0) {
                         clearTurnTimer(Number(gameId));
@@ -163,22 +149,19 @@ export function registerGameHandlers(io, socket) {
     });
 }
 
-// Restores a reconnecting player's current roll state
 function sendCurrentRollToReconnectingPlayer(socket, game) {
     const player = game.players.find(p => p.userId === socket.user.userId);
     const currentRound = player?.rounds?.find(r => r.roundNumber === game.currentRound);
 
     if (game.currentPhase === "rolling") {
-        // Send whose turn it is and how many rolls they've used
         socket.emit("turn_update", {
             currentTurnUserId: game.currentTurnUserId,
             rollsUsed: game.rollsUsed,
             rollsTotal: ROLLS_PER_TURN,
             roundNumber: game.currentRound,
-            expiresAt: null // timer already running, don't restart countdown
+            expiresAt: null
         });
 
-        // If it's this player's turn and they have existing dice, restore them
         if (game.currentTurnUserId === socket.user.userId && currentRound?.rolls?.length > 0) {
             socket.emit("roll_result", {
                 roundNumber: game.currentRound,
@@ -189,7 +172,6 @@ function sendCurrentRollToReconnectingPlayer(socket, game) {
             });
         }
 
-        // If they already finished their turn, send their locked dice
         if (game.currentTurnUserId !== socket.user.userId && currentRound?.rolls?.length > 0) {
             socket.emit("my_rolls_locked", {
                 roundNumber: game.currentRound,

@@ -12,7 +12,6 @@
   color: #c0392b;
 }
 
-/* Stats */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -68,7 +67,6 @@
   color: var(--color-text-muted, #666);
 }
 
-/* Sections */
 .section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -106,7 +104,6 @@
   font-size: 0.9rem;
 }
 
-/* Table */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -145,7 +142,6 @@
   font-size: 0.82rem;
 }
 
-/* Badges */
 .badge {
   font-size: 0.72rem;
   font-weight: 700;
@@ -166,7 +162,6 @@
   color: #fff;
 }
 
-/* Quick links */
 .quickLinks h2 {
   font-size: 1.1rem;
   margin-bottom: 0.75rem;

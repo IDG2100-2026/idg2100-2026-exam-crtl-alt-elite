@@ -6,33 +6,27 @@ import { useAuth } from './hooks/useAuth.js';
 import MainLayout from './layouts/MainLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
-// Static pages
 import AboutPage from './pages/StaticPages/AboutPage.jsx';
 import AboutDicePage from './pages/StaticPages/AboutDicePage.jsx';
 import TermsPage from './pages/StaticPages/TermsPage.jsx';
 import PrivacyPage from './pages/StaticPages/PrivacyPage.jsx';
 import NotFoundPage from './pages/StaticPages/NotFoundPage.jsx';
 
-// Auth pages
 import Login from './pages/Login/Login.jsx';
 import Register from './pages/Register/Register.jsx';
 import VerifyEmail from './pages/VerifyEmail/VerifyEmail.jsx';
 
-// Main pages
 import Home from './pages/HomePage/Home.jsx';
 import LobbyPage from './pages/Lobby/LobbyPage.jsx';
 import GamePage from './pages/GamePage/GamePage.jsx';
 import ProfilePage from './pages/Profile/ProfilePage.jsx';
 import CreateGame from './pages/CreateGame/CreateGame.jsx';
 
-// Tournament pages - uncomment when created
 import TournamentListPage from './pages/Tournament/TournamentList/TournamentList.jsx';
 import TournamentPage from './pages/Tournament/TournamentPage/TournamentPage.jsx';
 
-// Leaderboard
 import LeaderboardPage from './pages/Leaderboard/LeaderboardPage.jsx';
 
-// Admin pages
 import AdminLayout from './layouts/AdminLayout.jsx';
 import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
 import AdminUsers from './pages/Admin/AdminUsers.jsx';
@@ -46,7 +40,6 @@ function AppRoutes() {
     return (
       <Routes>
         <Route element={<MainLayout />}>
-          {/* Public routes */}
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
@@ -56,19 +49,16 @@ function AppRoutes() {
           <Route path="terms" element={<TermsPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 
-          {/* Public game routes */}
           <Route path="lobby" element={<LobbyPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="tournaments" element={<TournamentListPage />} />
 
-          {/* Protected routes, must be logged in */}
           <Route element={<ProtectedRoute />}>
             <Route path="createGame" element={<CreateGame />} />
             <Route path="games/:id" element={<GamePage />} />
             <Route path="tournaments/:id" element={<TournamentPage />} />
           </Route>
 
-          {/* Profile routes */}
           <Route path="profile/:id" element={<ProfilePage />} />
         </Route>
 
@@ -80,7 +70,6 @@ function AppRoutes() {
           </Route>
         </Route>
 
-        {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
     </Routes>
     );

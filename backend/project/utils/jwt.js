@@ -6,8 +6,6 @@ const {
     REFRESH_TOKEN_SECRET
 } = process.env;
 
-// Signs a new access token
-// Payload includes userId, role and the client's IP for security incident detection
 export function signAccessToken(userId, role, ip) {
     return jwt.sign(
         { userId, role, ip },
@@ -16,8 +14,6 @@ export function signAccessToken(userId, role, ip) {
     );
 }
 
-// Signs a new refrash token
-// Used to obtain new access tokens without re-logging in
 export function signRefreshToken(userId) {
     return jwt.sign(
         { userId },
@@ -26,8 +22,6 @@ export function signRefreshToken(userId) {
     );
 }
 
-// Verifies an access token and returns the decoded payload
-// Returns null if the token is invalid or expired
 export function verifyAccessToken(token) {
     try {
         return jwt.verify(token, ACCESS_TOKEN_SECRET);
@@ -36,8 +30,6 @@ export function verifyAccessToken(token) {
     }
 }
 
-// Verifies a refresh token and returns the decoded payload
-// Returns null if the token is invalid or expired
 export function verifyRefreshToken(token) {
     try {
         return jwt.verify(token, REFRESH_TOKEN_SECRET);

@@ -12,7 +12,6 @@ export default function TournamentList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // reset page
   useEffect(() => {
   if (search.trim().length > 0 && search.trim().length < 3) return;
 
@@ -30,7 +29,6 @@ export default function TournamentList() {
 }, [search, sortBy, page]);
 
 
-  
   const tournaments = data?.tournaments ?? [];
   const totalPages = data?.totalPages ?? 1;
 

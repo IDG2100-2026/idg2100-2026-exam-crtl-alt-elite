@@ -14,9 +14,6 @@ import {
     MAX_BUYIN
 } from "../config/constants.js";
 
-// GET /api/variants?rounds=5&straightsAllowed=true&timeControl=30&numPlayers=2&buyIn=10
-// Validates query parameters for filtering game variants
-// Used on the lobby page to filter available game variants
 export function validateGetVariants() {
     return [
         query("rounds")

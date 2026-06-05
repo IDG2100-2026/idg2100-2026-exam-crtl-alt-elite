@@ -9,15 +9,10 @@ const adminRouter = express.Router();
 adminRouter.use(identifyUser);
 adminRouter.use(requireAdmin);
 
-// All routes in this file require admin access
-// requireAdmin is applied to the whole router above
-
-// GET /api/admin/dashboard
 adminRouter.get("/dashboard", adminController.getDashboard);
 
-// GET /api/admin/incidents
 adminRouter.get(
-    "/incidents", 
+    "/incidents",
     adminValidator.validateGetIncidents(),
     validate,
     adminController.getSecurityIncidents

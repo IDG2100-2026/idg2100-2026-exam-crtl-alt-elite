@@ -43,7 +43,6 @@ export default function Home() {
     return (
         <div className={Styles.homeContainer}>
 
-            {/* Hero */}
             <section className={Styles.hero}>
                 <img className={Styles.mainImg} src={mainImg} alt="spanish poker dice" />
                 <div className={Styles.heroContent}>
@@ -60,7 +59,6 @@ export default function Home() {
 
             {error && <p style={{ padding: "1rem", color: "red" }}>{error}</p>}
 
-            {/* Lobby preview */}
             <section className={Styles.lobbySection}>
                 <div className={Styles.sectionHeader}>
                     <h2>Lobby</h2>

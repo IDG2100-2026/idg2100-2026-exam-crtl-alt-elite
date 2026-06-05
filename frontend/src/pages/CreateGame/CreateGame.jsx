@@ -1,4 +1,3 @@
-// Reused on code from Nora Storro (Fullstack assignment 3)
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useFetch } from "../../hooks/useFetch.js";
@@ -6,14 +5,10 @@ import { gameApi, variantApi } from "../../api/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import styles from "./CreateGame.module.css";
 
-// Page for creating a new game room
-// Allows selecting all game variant options before creating the room
-
 export default function CreateGame() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Selected variant options, null means "use default from loaded variants"
     const [selectedRounds, setSelectedRounds] = useState(null);
     const [selectedStraights, setSelectedStraights] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -23,24 +18,19 @@ export default function CreateGame() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch all variants to get the available options
     const { data: variants } = useFetch(() => variantApi.getAll());
 
-    // Get unique sorted options from variants
     const roundOptions = [...new Set(variants?.map(v => v.rounds) ?? [])].sort((a, b) => a - b);
     const timeOptions = [...new Set(variants?.map(v => v.timeControl) ?? [])].sort((a, b) => a - b);
     const numPlayersOptions = [...new Set(variants?.map(v => v.numPlayers) ?? [])].sort((a, b) => a - b);
     const buyInOptions = [...new Set(variants?.map(v => v.buyIn) ?? [])].sort((a, b) => a - b);
 
-    // Derive effective values, user override takes priority, first option is the default
     const effectiveRounds = selectedRounds ?? roundOptions[0] ?? null;
     const effectiveStraights = selectedStraights ?? true;
     const effectiveTime = selectedTime ?? timeOptions[0] ?? null;
     const effectiveNumPlayers = selectedNumPlayers ?? numPlayersOptions[0] ?? null;
     const effectiveBuyIn = selectedBuyIn ?? buyInOptions[0] ?? null;
 
-    // Find the variant that matches all selected options
-    // (inspired by: https://www.youtube.com/watch?v=vpE9I_eqHdM&t=592s)
     const selectedVariant = variants?.find(v =>
         v.rounds === effectiveRounds &&
         v.straightsAllowed === effectiveStraights &&
@@ -73,10 +63,8 @@ export default function CreateGame() {
         setLoading(true);
 
         try {
-            // createRoom only needs variantId - identity comes from the JWT token
             const result = await gameApi.createRoom(selectedVariant._id);
 
-            // Navigate to the game room after creating it
             navigate(`/games/${result.game.gameId}`);
         } catch (err) {
             setError(err.message);
@@ -93,7 +81,6 @@ export default function CreateGame() {
 
                 <form onSubmit={handleSubmit} className={styles.form}>
 
-                    {/* Rounds selector */}
                     <div className={styles.section}>
                         <div className={styles.label}>Number of rounds</div>
                         <div className={styles.toggleGroup}>
@@ -110,7 +97,6 @@ export default function CreateGame() {
                         </div>
                     </div>
 
-                    {/* Straights selector */}
                     <div className={styles.section}>
                         <div className={styles.label}>Straights</div>
                         <div className={styles.toggleGroup}>
@@ -131,7 +117,6 @@ export default function CreateGame() {
                         </div>
                     </div>
 
-                    {/* Time control selector */}
                     <div className={styles.section}>
                         <div className={styles.label}>Total time (seconds)</div>
                         <div className={styles.toggleGroup}>
@@ -148,7 +133,6 @@ export default function CreateGame() {
                         </div>
                     </div>
 
-                    {/* Number of players selector */}
                     <div className={styles.section}>
                         <div className={styles.label}>Number of players</div>
                         <div className={styles.toggleGroup}>
@@ -165,7 +149,6 @@ export default function CreateGame() {
                         </div>
                     </div>
 
-                    {/* Buy-in selector */}
                     <div className={styles.section}>
                         <div className={styles.label}>Buy-in (points)</div>
                         <div className={styles.toggleGroup}>

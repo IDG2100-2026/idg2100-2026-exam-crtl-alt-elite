@@ -1,10 +1,9 @@
 import { query } from "express-validator";
 import { validatePagination } from "./pagination.validator.js";
 
-// GET /api/leaderboard?sort=elo&page=1&limit=20&variantId=123
 export function validateGetLeaderboard() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("sort")
             .optional()

@@ -149,7 +149,7 @@
 .comment {
     display: flex;
     flex-direction: column;
-    /* gap: 0.2rem; */
+
     margin-top: 1rem;
     background-color: #1f5c3f68;
     width: 90%;

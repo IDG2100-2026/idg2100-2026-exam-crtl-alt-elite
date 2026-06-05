@@ -13,13 +13,10 @@ const apiRouter = express.Router();
 
 apiRouter.use(express.json());
 
-// Auth routes first
 apiRouter.use("/auth", authRoutes);
 
-// Admin routes before other routes to avoid parameterised route conflicts
 apiRouter.use("/admin", adminRoutes);
 
-// Resource routes
 apiRouter.use("/users", userRoutes);
 apiRouter.use("/games", gameRoutes);
 apiRouter.use("/variants", gameVariantRoutes);

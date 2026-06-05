@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 
-// Counts down to a target date, returning days, hours, minutes, seconds
-// Returns null when the countdown reaches zero or no target date is provided
 export function useCountdown(targetDate) {
     const [timeLeft, setTimeLeft] = useState(null);
 

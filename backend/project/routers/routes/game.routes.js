@@ -9,18 +9,10 @@ const gameRouter = express.Router();
 
 gameRouter.use(identifyUser);
 
-/* Public - anyone can view games and spectate */
-// GET /api/games
-gameRouter.get("/", gameValidator.validateGetGames(), validate, gameController.getAllGames
-);
+gameRouter.get("/", gameValidator.validateGetGames(), validate, gameController.getAllGames);
 
-// GET /api/games/:id
-gameRouter.get("/:id", gameValidator.validateGameId(), validate, gameController.getGame
-);
+gameRouter.get("/:id", gameValidator.validateGameId(), validate, gameController.getGame);
 
-/* Registered and verified users only */
-// POST /api/games
-// Creates a new game room
 gameRouter.post(
     "/",
     requireUser,
@@ -31,8 +23,6 @@ gameRouter.post(
     gameController.createRoom
 );
 
-// POST /api/games/:id/players
-// Joins an existing game room
 gameRouter.post(
     "/:id/players",
     requireUser,
@@ -43,8 +33,6 @@ gameRouter.post(
     gameController.joinRoom
 );
 
-// DELETE /api/games/:id/players/:userId
-// Leaves a game room before it starts
 gameRouter.delete(
     "/:id/players/:userId",
     requireUser,

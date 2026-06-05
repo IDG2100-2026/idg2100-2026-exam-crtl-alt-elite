@@ -1,10 +1,9 @@
 import { query } from "express-validator";
 import { validatePagination } from "./pagination.validator.js";
 
-// GET /api/admin/incidents?type=ip_mismatch&page=1&limit=20
 export function validateGetIncidents() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("type")
             .optional()

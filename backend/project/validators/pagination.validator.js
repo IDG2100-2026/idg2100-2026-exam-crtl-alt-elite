@@ -1,8 +1,5 @@
 import { query } from "express-validator";
 
-// Shared pagination validators
-// Used across multiple validator files to avoid duplication
-// Returns an array of validators that can be spread into any validator function
 export function validatePagination() {
     return [
         query("page")

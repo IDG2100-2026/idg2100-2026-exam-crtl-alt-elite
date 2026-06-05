@@ -1,4 +1,3 @@
-// Single die component
 class DicePokerDie extends HTMLElement {
   static faces = ["A", "K", "Q", "J", "8", "7"];
 
@@ -7,7 +6,6 @@ class DicePokerDie extends HTMLElement {
     this.attachShadow({ mode: "open" });
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#responding_to_attribute_changes
   static get observedAttributes() {
     return ["face", "held", "owner", "die-id", "disabled"];
   }
@@ -35,7 +33,6 @@ class DicePokerDie extends HTMLElement {
     }));
   }
 
-  // Toggle hold/release, blocked when disabled (not active player's turn)
   toggleHeld() {
     if (this.hasAttribute("disabled")) return;
 
@@ -60,7 +57,6 @@ class DicePokerDie extends HTMLElement {
     const isHeld = this.hasAttribute("held");
     const isDisabled = this.hasAttribute("disabled");
 
-    // Styles from https://www.youtube.com/watch?v=M3InbHr0WAc
     this.shadowRoot.innerHTML = `
       <style>
         .die {

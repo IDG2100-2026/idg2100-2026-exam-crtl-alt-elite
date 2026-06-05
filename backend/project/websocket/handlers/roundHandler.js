@@ -6,12 +6,9 @@ import {
     updateELORatings
 } from "../../services/game.services.js";
 
-// Handles the end of a betting phase
-// Reveals all dice, determines round winner, starts next round or ends game
 export async function handleRoundEnd(io, game) {
     const gameId = game.gameId;
 
-    // Reveal all players' dice
     for (const player of game.players) {
         const currentRound = player.rounds.find(r => r.roundNumber === game.currentRound);
         if (currentRound) {
@@ -22,7 +19,6 @@ export async function handleRoundEnd(io, game) {
     game.currentPhase = "reveal";
     await game.save();
 
-    // Build reveal data, all rolls are now visible
     const revealData = game.players.map(player => {
         const currentRound = player.rounds.find(r => r.roundNumber === game.currentRound);
         return {
@@ -33,18 +29,14 @@ export async function handleRoundEnd(io, game) {
         };
     });
 
-    // Determine round winner based on poker dice hand rankings
-    // Winner collects the pot
     const roundWinners = determineRoundWinners(game);
 
-    // Split pot evenly among winners (handles draws)
     const splitAmount = Math.floor(game.pot / roundWinners.length);
     for (const winnerId of roundWinners) {
         const winner = game.players.find(p => p.userId === winnerId);
         if (winner) winner.points += splitAmount;
     }
 
-    // Reset pot and current bets for next round
     game.pot = 0;
     for (const player of game.players) {
         player.currentBet = 0;
@@ -53,7 +45,6 @@ export async function handleRoundEnd(io, game) {
     game.markModified("players");
     await game.save();
 
-    // Broadcast reveal to all players including updated points
     io.to(`game:${gameId}`).emit("round_end", {
         roundNumber: game.currentRound,
         reveal: revealData,
@@ -62,42 +53,33 @@ export async function handleRoundEnd(io, game) {
         players: game.players.map(p => ({ userId: p.userId, points: p.points }))
     });
 
-    // Check if the game is over
     const totalRounds = game.variantId?.rounds || 3;
     if (game.currentRound >= totalRounds) {
         await handleGameEnd(io, game);
     } else {
-        // Start the next round after a short delay
         game.currentRound += 1;
         game.currentPhase = "rolling";
         await game.save();
 
-        // Small delay before starting next round so players can see reveal results
         setTimeout(async () => {
             const updatedGame = await Game.findOne({ gameId })
                 .populate("variantId");
             await handleRoll(io, updatedGame);
-        }, 3000); // 3 second delay between rounds
+        }, 3000);
     }
 }
 
-// Determines the winner(s) of a round based on poker dice hand rankings
-// Returns an array of userIds
 function determineRoundWinners(game) {
     const activePlayers = game.players.filter(player => {
         const round = player.rounds.find(r => r.roundNumber === game.currentRound);
         return !round?.folded && !player.abandoned;
     });
 
-    // If all players folded except one, that player wins
     if (activePlayers.length === 1) {
         return [activePlayers[0].userId];
     }
 
-    // If all players folded, give the pot to the player who committed the most this round
-    // (highest currentBet means they stayed in the longest before folding)
     if (activePlayers.length === 0) {
-        // Exclude abandoned players so a disconnected player cannot receive the pot
         const foldedPlayers = game.players.filter(p => {
             const round = p.rounds.find(r => r.roundNumber === game.currentRound);
             return round?.folded && !p.abandoned;
@@ -109,7 +91,6 @@ function determineRoundWinners(game) {
         return [lastFolder.userId];
     }
 
-    // Rank each active player's hand
     const ranked = activePlayers.map(player => {
         const round = player.rounds.find(r => r.roundNumber === game.currentRound);
         return {
@@ -118,39 +99,30 @@ function determineRoundWinners(game) {
         };
     });
 
-    // Sort by score descending
     ranked.sort((a, b) => b.score - a.score);
 
-    // Return all players tied for the highest score
     const highestScore = ranked[0].score;
     return ranked
         .filter(p => p.score === highestScore)
         .map(p => p.userId);
 }
 
-// Handles the end of the entire game
-// Returns points to profiles, updates ELO, records winner
 async function handleGameEnd(io, game) {
     const gameId = game.gameId;
 
-    // Set final points for each player
     for (const player of game.players) {
         player.finalPoints = player.points;
     }
 
-    // Determine overall game winners based on final point stacks
     game.winnerId = determineWinners(game.players);
     game.status = "finished";
     game.finishedAt = new Date();
     await game.save();
 
-    // Return remaining points to user profiles
     await returnPointsToProfiles(game.players);
 
-    // Update ELO ratings for all players
     await updateELORatings(game.players, game._id);
 
-    // Broadcast game end to all players
     io.to(`game:${gameId}`).emit("game_end", {
         winnerId: game.winnerId,
         players: game.players.map(p => ({
@@ -160,18 +132,11 @@ async function handleGameEnd(io, game) {
     });
 }
 
-// Evaluates a poker dice hand and returns a numeric score
-// Higher score = better hand
-// Hand rankings (high to low):
-// Five of a kind, Four of a kind, Full house,
-// Straight (if allowed), Three of a kind, Two pair, One pair, High card
 export function evaluateHand(dice, straightsAllowed = true) {
     if (!dice || dice.length !== 5) return 0;
 
-    // Map poker faces to numeric rank: 7→1, 8→2, J→3, Q→4, K→5, A→6
     const FACE_RANK = { "7": 1, "8": 2, "J": 3, "Q": 4, "K": 5, "A": 6 };
 
-    // Count occurrences of each die value
     const counts = {};
     for (const die of dice) {
         counts[die] = (counts[die] || 0) + 1;
@@ -200,8 +165,6 @@ export function evaluateHand(dice, straightsAllowed = true) {
         handScore = 0;
     }
 
-    // Tiebreaker: sort by count desc then rank desc so higher-ranked pairs beat lower-ranked ones
-    // e.g. pair of Aces beats pair of 7s
     const tiebreaker = Object.entries(counts)
         .map(([face, count]) => ({ rank: FACE_RANK[face] || 0, count }))
         .sort((a, b) => b.count - a.count || b.rank - a.rank)

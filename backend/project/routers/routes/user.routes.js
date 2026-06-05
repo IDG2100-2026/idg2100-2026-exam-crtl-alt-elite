@@ -7,21 +7,17 @@ import uploadMiddleware from "../../middleware/uploads.js";
 
 const userRouter = express.Router();
 
-// Apply identifyUser authentication to all routes in this file
 userRouter.use(identifyUser);
 
-/* Registered users */
-// /api/users/:id
 userRouter.get("/:id", requireUser, userValidator.validateUserId(), validate, userController.getUser);
-userRouter.put("/:id", 
-    requireUser, 
-    userValidator.validateUserId(), 
-    validate, 
-    userValidator.validateUpdateUser(), 
-    validate, 
+userRouter.put("/:id",
+    requireUser,
+    userValidator.validateUserId(),
+    validate,
+    userValidator.validateUpdateUser(),
+    validate,
     userController.updateUser
 );
-// /api/users/:id/avatar
 userRouter.put(
     "/:id/avatar",
     requireUser,
@@ -31,14 +27,9 @@ userRouter.put(
     userController.uploadAvatar
 );
 
-/* Admin users */
-// /api/users
 userRouter.get("/", requireAdmin, userValidator.validateGetUsers(), validate, userController.getAllUsers);
-// /api/users/:id/ban
 userRouter.put("/:id/ban", requireAdmin, userValidator.validateUserId(), validate, userController.banUser);
-// /api/users/:id/unban
 userRouter.put("/:id/unban", requireAdmin, userValidator.validateUserId(), validate, userController.unbanUser);
-// /api/users/:id/role
 userRouter.put("/:id/role", requireAdmin, userValidator.validateUserId(), validate, userController.makeAdmin);
 
 export default userRouter;

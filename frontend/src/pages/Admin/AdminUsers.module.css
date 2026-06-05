@@ -13,7 +13,6 @@
   margin-bottom: 1rem;
 }
 
-/* Search */
 .searchBar {
   display: flex;
   gap: 0.5rem;
@@ -67,7 +66,6 @@
   margin-bottom: 0.75rem;
 }
 
-/* Table */
 .tableWrap {
   overflow-x: auto;
   border: 1px solid var(--color-border);
@@ -125,7 +123,6 @@
   color: var(--color-text-muted);
 }
 
-/* Role badges */
 .roleBadge {
   font-size: 0.72rem;
   font-weight: 700;
@@ -159,7 +156,6 @@
   border-radius: 20px;
 }
 
-/* Actions */
 .actions {
   display: flex;
   gap: 0.4rem;
@@ -209,7 +205,6 @@
   color: #fff;
 }
 
-/* Pagination */
 .pagination {
   display: flex;
   align-items: center;

@@ -19,18 +19,15 @@ function CommentSection({ tournamentId, user }) {
                 const data = await commentApi.getAll(tournamentId, "tournament");
                 setComments(data.comments ?? []);
             } catch {
-                // silently fail
             }
         }
         fetchComments();
     }, [tournamentId]);
 
-    // Join WebSocket comment room for live comments
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
 
-        // targetType is tournament, not game
         socket.emit("join_comments", { targetType: "tournament", targetId: Number(tournamentId) });
 
         socket.on("new_comment", (newComment) => {
@@ -41,9 +38,8 @@ function CommentSection({ tournamentId, user }) {
             setComments(prev => prev.filter(c => c._id !== commentId));
         });
 
-        // Show backend validation errors to the user
         socket.on("error", ({ msg }) => {
-            setError(msg); // was setCommentErr, should be setError
+            setError(msg);
         });
 
         return () => {
@@ -51,7 +47,7 @@ function CommentSection({ tournamentId, user }) {
             socket.off("comment_deleted");
             socket.off("error");
         };
-    }, [tournamentId]); // was [id], should be [tournamentId]
+    }, [tournamentId]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,7 +62,6 @@ function CommentSection({ tournamentId, user }) {
             const socket = getSocket();
             if (!socket) throw new Error("Not connected to server.");
 
-            // Post via WebSocket so the broadcast fires to all users in the room
             socket.emit("post_comment", {
                 targetType: "tournament",
                 targetId: Number(tournamentId),
@@ -116,7 +111,6 @@ function CommentSection({ tournamentId, user }) {
     );
 }
 
-// Fetches and displays ongoing games for non-player spectators
 function OngoingGames({ tournamentId }) {
     const [games, setGames] = useState([]);
     const navigate = useNavigate();
@@ -127,7 +121,6 @@ function OngoingGames({ tournamentId }) {
                 const data = await tournamentApi.getGames(tournamentId);
                 setGames(data.games ?? []);
             } catch {
-                // silently fail
             }
         }
         fetchGames();
@@ -163,7 +156,6 @@ export default function TournamentPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState(null);
 
-    // Countdown to tournament start or next round
     const countdown = useCountdown(
         tournament?.status === "upcoming" ? tournament?.scheduledAt :
         tournament?.status === "ongoing" ? tournament?.nextRoundAt : null
@@ -188,7 +180,6 @@ export default function TournamentPage() {
         fetchTournament();
     }, [id]);
 
-    // Fetch standings for ongoing and finished tournaments
     useEffect(() => {
         if (tournament?.status !== "ongoing" && tournament?.status !== "finished") return;
 
@@ -197,13 +188,11 @@ export default function TournamentPage() {
                 const data = await tournamentApi.getStandings(id);
                 setStandings(data.standings ?? []);
             } catch {
-                // silently fail
             }
         }
         fetchStandings();
     }, [id, tournament?.status]);
 
-    // Redirect players to their game when a tournament game is ready
     useEffect(() => {
         const socket = getSocket();
         if (!socket || !isPlayer) return;
@@ -220,7 +209,6 @@ export default function TournamentPage() {
         setActionError(null);
         try {
             await tournamentApi.join(id);
-            // Refetch to update player list
             const data = await tournamentApi.getById(id);
             setTournament(data.tournament ?? data);
         } catch (err) {
@@ -286,7 +274,6 @@ export default function TournamentPage() {
     return (
         <div className={styles.page}>
 
-            {/* Header */}
             <div className={styles.header}>
                 <div className={styles.headerTop}>
                     <h1>{tournament.title}</h1>
@@ -300,7 +287,6 @@ export default function TournamentPage() {
             <div className={styles.layout}>
                 <div className={styles.main}>
 
-                    {/* Trophy image */}
                     {tournament.trophyId?.imageUrl && (
                         <section className={styles.trophy}>
                             <img
@@ -311,7 +297,6 @@ export default function TournamentPage() {
                         </section>
                     )}
 
-                    {/* Countdown to tournament start or next round */}
                     {countdown && (
                         <section className={styles.countdown}>
                             <h2>
@@ -326,7 +311,6 @@ export default function TournamentPage() {
                         </section>
                     )}
 
-                    {/* Tournament rules */}
                     <section className={styles.rules}>
                         <h2>Tournament Rules</h2>
                         <ul>
@@ -346,7 +330,6 @@ export default function TournamentPage() {
                         </ul>
                     </section>
 
-                    {/* Standings - shown for ongoing and finished tournaments */}
                     {(isOngoing || isFinished) && standings.length > 0 && (
                         <section className={styles.standings}>
                             <h2>Standings</h2>
@@ -371,7 +354,6 @@ export default function TournamentPage() {
                         </section>
                     )}
 
-                    {/* Ongoing games - shown to non-players during an ongoing tournament */}
                     {isOngoing && !isPlayer && (
                         <section className={styles.ongoingGames}>
                             <h2>Ongoing Games</h2>
@@ -382,10 +364,8 @@ export default function TournamentPage() {
                     <CommentSection tournamentId={id} user={user} />
                 </div>
 
-                {/* Sidebar */}
                 <aside className={styles.sidebar}>
 
-                    {/* Players list */}
                     <section className={styles.players}>
                         <h2>
                             Players ({tournament.players?.length ?? 0}/{tournament.maxPlayers})
@@ -402,7 +382,6 @@ export default function TournamentPage() {
                         </ul>
                     </section>
 
-                    {/* Action buttons */}
                     <section className={styles.actions}>
                         {actionError && <p className={styles.error}>{actionError}</p>}
 
@@ -426,7 +405,6 @@ export default function TournamentPage() {
                             </button>
                         )}
 
-                        {/* Admin actions */}
                         {isAdmin && (
                             <>
                                 <Link

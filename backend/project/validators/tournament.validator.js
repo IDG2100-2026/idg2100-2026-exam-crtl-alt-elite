@@ -14,27 +14,23 @@ import {
     MAX_PLAYERS
 } from "../config/constants.js";
 
-// Validates the tournamentId route parameter
-// Used in getTournament, joinTournament, updateTournament, cancelTournament and deleteTournament
 export function validateTournamentId() {
     return [
         param("id")
             .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("Tournament ID must be a valid integer")
-            .bail() // Stop checking if the above fails
-            .toInt() // Convert to integer for all following checks
+            .bail()
+            .toInt()
             .custom(async (id) => {
                 const tournament = await findTournamentById(id);
                 if (!tournament) throw new Error("Tournament was not found");
-            }) // Checks if the tournament actually exists in the db after validating the ID format
+            })
     ];
 }
 
-// GET /api/tournaments?status=upcoming&page=1&limit=20&sort=scheduledAt&order=asc&search=summer
-// The limit for the pagination can be changed
 export function validateGetTournaments() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("status")
             .optional()
@@ -51,7 +47,6 @@ export function validateGetTournaments() {
             .isIn(["asc", "desc"])
             .withMessage("order must be asc or desc"),
 
-        // Search term must be at least 3 characters as per task description
         query("search")
             .optional()
             .isString()
@@ -61,8 +56,6 @@ export function validateGetTournaments() {
     ];
 }
 
-// POST /api/tournaments
-// Validates the request body for creating a tournament
 export function validateCreateTournament() {
     return [
         body("title")
@@ -114,11 +107,10 @@ export function validateCreateTournament() {
             .notEmpty()
             .withMessage("scheduledAt is required")
             .bail()
-            .isISO8601() // International standard for formatting dates and times
+            .isISO8601()
             .withMessage("scheduledAt must be a valid date")
             .bail()
             .toDate()
-            // Makes sure that the new date is actually in the future
             .custom((date) => {
                 if (date <= new Date()) throw new Error("Tournament must be scheduled in the future");
                 return true;
@@ -130,7 +122,6 @@ export function validateCreateTournament() {
             .notEmpty()
             .withMessage("trophyTitle is required"),
 
-        // ELO range is optional but both must be provided together
         body("eloMin")
             .optional()
             .isInt({ min: 0 })
@@ -143,8 +134,6 @@ export function validateCreateTournament() {
             .withMessage("eloMax must be a non-negative integer")
             .toInt(),
 
-        // Cross-field validation, eloMin and eloMax must be provided together
-        // Uses req.body to access eloMax when validating eloMin
         body("eloMin").custom((eloMin, { req }) => {
             const eloMax = req.body.eloMax;
             const hasMin = eloMin !== undefined && eloMin !== null;
@@ -163,15 +152,12 @@ export function validateCreateTournament() {
     ];
 }
 
-// PUT /api/tournaments/:id
-// Validates the request body for updating a tournament
-// All fields are optional since the admin can update one or more fields at a time
 export function validateUpdateTournament() {
     return [
         body("title")
             .optional()
             .trim()
-            .escape() // Replaces XSS-related characters with HTML equivalents
+            .escape()
             .isLength({ min: MIN_TITLE_LENGTH, max: MAX_TITLE_LENGTH })
             .withMessage(`Title must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters`),
 
@@ -205,17 +191,15 @@ export function validateUpdateTournament() {
 
         body("scheduledAt")
             .optional()
-            .isISO8601() // International standard for formatting dates and times
+            .isISO8601()
             .withMessage("scheduledAt must be a valid date")
             .bail()
             .toDate()
-            // Makes sure that the new date is actually in the future
             .custom((date) => {
                 if (date <= new Date()) throw new Error("Tournament must be scheduled in the future");
                 return true;
             }),
 
-        // ELO range is optional but both must be provided together
         body("eloMin")
             .optional()
             .isInt({ min: 0 })
@@ -228,8 +212,6 @@ export function validateUpdateTournament() {
             .withMessage("eloMax must be a non-negative integer")
             .toInt(),
 
-        // Cross-field validation, eloMin and eloMax must be provided together
-        // Uses req.body to access eloMax when validating eloMin
         body("eloMin").custom((eloMin, { req }) => {
             const eloMax = req.body.eloMax;
             const hasMin = eloMin !== undefined && eloMin !== null;

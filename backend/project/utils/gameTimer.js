@@ -1,15 +1,10 @@
 import { Game } from "../models/game.js";
 import { handleRoundEnd } from "../websocket/handlers/roundHandler.js";
 
-// Per-turn timers (rolling phase): one per active game
 const turnTimers = new Map();
 
-// Per-round betting timers: one per active game
 const bettingTimers = new Map();
 
-// Starts a countdown for the current player's turn
-// When it fires, ends the turn (moves to next player or starts betting)
-// Uses dynamic import to avoid circular dependency with rollHandler
 export function startTurnTimer(io, game, timeMs) {
     const gameId = game.gameId;
     clearTurnTimer(gameId);
@@ -34,8 +29,6 @@ export function clearTurnTimer(gameId) {
     }
 }
 
-// Starts the betting phase timer
-// When it fires, ends the round (forces unfinished bets to close)
 export function startBettingTimer(io, game) {
     const gameId = game.gameId;
     const timeMs = (game.variantId?.timeControl || 30) * 1000;
@@ -63,6 +56,5 @@ export function clearBettingTimer(gameId) {
     }
 }
 
-// Backward-compat aliases used by betHandler.js
 export const startRoundTimer = startBettingTimer;
 export const clearRoundTimer = clearBettingTimer;

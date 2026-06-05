@@ -5,7 +5,6 @@ export default function GameCard({ game, showJoin = false, onJoin, index = 0 }) 
     const navigate = useNavigate();
     const variant = game.variantId;
 
-    // New game model uses players array instead of playerOne/playerTwo
     const p0Name = game.players?.[0]?.username ?? "Unknown";
     const p1Name = game.players?.[1]?.username ?? "Waiting...";
 
@@ -39,7 +38,6 @@ export default function GameCard({ game, showJoin = false, onJoin, index = 0 }) 
             </div>
 
             <button className={styles.joinBtn} onClick={handleJoin}>
-                {/* Room status replaces the old waiting status */}
                 {showJoin && game.status === "room" ? "JOIN" : "VIEW"}
             </button>
         </div>

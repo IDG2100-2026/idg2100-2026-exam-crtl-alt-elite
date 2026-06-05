@@ -5,14 +5,13 @@ import styles from "./VerifyEmail.module.css";
 
 export default function VerifyEmail() {
     const [searchParams] = useSearchParams();
-    const [status, setStatus] = useState("verifying"); // "verifying", "success", "error"
+    const [status, setStatus] = useState("verifying");
     const [message, setMessage] = useState("");
     const [resendEmail, setResendEmail] = useState("");
     const [resendStatus, setResendStatus] = useState(null);
 
     const token = searchParams.get("token");
 
-    // Automatically verify when the page loads with a token
     useEffect(() => {
         async function verify() {
             if (!token) {
@@ -52,12 +51,10 @@ export default function VerifyEmail() {
             <div className={styles.card}>
                 <h1 className={styles.title}>Email Verification</h1>
 
-                {/* Verifying state */}
                 {status === "verifying" && (
                     <p className={styles.message}>Verifying your email...</p>
                 )}
 
-                {/* Success state */}
                 {status === "success" && (
                     <>
                         <p className={styles.success}>{message}</p>
@@ -67,12 +64,10 @@ export default function VerifyEmail() {
                     </>
                 )}
 
-                {/* Error state */}
                 {status === "error" && (
                     <>
                         <p className={styles.error}>{message}</p>
 
-                        {/* Offer to resend verification email */}
                         <div className={styles.resend}>
                             <p>Need a new verification link?</p>
                             <form onSubmit={handleResend} className={styles.form}>

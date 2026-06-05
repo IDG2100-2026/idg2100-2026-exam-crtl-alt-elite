@@ -6,8 +6,6 @@ export async function seedUsers() {
     console.log("Deleted existing users");
 
     const userDocs = users.map(userPojo => new User(userPojo));
-    // Using individual .save() to ensure all validation hooks run
-    // (pre validate hooks don't run with insertMany)
     await Promise.all(userDocs.map(u => u.save()));
     console.log(`Inserted ${userDocs.length} users`);
 }

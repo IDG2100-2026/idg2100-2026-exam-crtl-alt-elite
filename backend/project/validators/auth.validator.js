@@ -8,7 +8,6 @@ import {
     MIN_AGE
 } from "../config/constants.js";
 
-// POST /api/auth/register
 export function validateRegister() {
     return [
         body("username")
@@ -36,7 +35,6 @@ export function validateRegister() {
     ];
 }
 
-// POST /api/auth/login
 export function validateLogin() {
     return [
         body("emailOrUsername")
@@ -50,7 +48,6 @@ export function validateLogin() {
     ];
 }
 
-// POST /api/auth/email-verification
 export function validateResendVerification() {
     return [
         body("email")

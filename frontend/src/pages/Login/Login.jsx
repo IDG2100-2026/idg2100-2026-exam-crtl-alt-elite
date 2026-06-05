@@ -13,10 +13,8 @@ export default function Login() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    // If the user was redirected here from a protected page, send them back after login
     const from = location.state?.from?.pathname || "/";
 
-    // Message passed from Register page after successful registration
     const message = location.state?.message || null;
 
     async function handleSubmit(e) {
@@ -31,12 +29,10 @@ export default function Login() {
         setError(null);
 
         try {
-            // login() in AuthProvider calls authApi.login() and stores the access token
             await login(emailOrUsername.trim(), pwd);
             navigate(from, { replace: true });
 
         } catch (err) {
-            // Use the message from the backend (e.g. "Invalid email/username or password")
             setError(err.message || "Login failed.");
             setSubmitting(false);
         }
@@ -48,7 +44,6 @@ export default function Login() {
                 <h1 className={styles.title}>Log In</h1>
                 <p className={styles.sub}>Welcome back to Spanish Poker Dice.</p>
 
-                {/* Show message from registration redirect */}
                 {message && <p className={styles.message}>{message}</p>}
 
                 <form onSubmit={handleSubmit} className={styles.form}>

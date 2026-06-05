@@ -7,11 +7,8 @@ import authValidator from "../../validators/auth.validator.js";
 
 const authRouter = express.Router();
 
-// Apply identifyUser to all auth routes
 authRouter.use(identifyUser);
 
-/* Public */
-// POST /api/auth/register
 authRouter.post(
     "/register",
     authLimiter,
@@ -20,7 +17,6 @@ authRouter.post(
     authController.register
 );
 
-// POST /api/auth/login
 authRouter.post(
     "/login",
     authLimiter,
@@ -29,13 +25,10 @@ authRouter.post(
     authController.login
 );
 
-// POST /api/auth/refresh
 authRouter.post("/refresh", authController.refresh);
 
-// GET /api/auth/email-verification?token=...
 authRouter.get("/email-verification", authController.verifyEmail);
 
-// POST /api/auth/email-verification
 authRouter.post(
     "/email-verification",
     authLimiter,
@@ -44,8 +37,6 @@ authRouter.post(
     authController.resendVerification
 );
 
-/* Registered users only */
-// POST /api/auth/logout
 authRouter.post("/logout", requireUser, authController.logout);
 
 export default authRouter;

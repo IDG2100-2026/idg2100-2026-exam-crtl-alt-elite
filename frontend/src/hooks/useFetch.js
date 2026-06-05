@@ -1,4 +1,3 @@
-// src/hooks/useFetch.js
 import { useState, useEffect } from "react";
 
 export function useFetch(fetchFn) {
@@ -24,7 +23,6 @@ export function useFetch(fetchFn) {
 
     fetchData();
 
-    // Cleanup: unngå state-oppdatering hvis komponenten er unmountet
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

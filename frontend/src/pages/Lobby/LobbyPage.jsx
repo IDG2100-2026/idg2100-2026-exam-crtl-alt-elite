@@ -48,7 +48,6 @@ export default function LobbyPage() {
                 </p>
             )}
 
-            {/* Filters */}
             <div className={styles.filters}>
                 <div className={styles.filterGroup}>
                     <label>Rounds</label>

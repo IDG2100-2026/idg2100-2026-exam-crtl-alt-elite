@@ -32,9 +32,7 @@ export default function Register() {
                 age: Number(age)
             });
 
-            // Registration successful - user needs to verify email before logging in
-            // Redirect to login page with a message
-            navigate("/login", { 
+            navigate("/login", {
                 state: { message: "Registration successful! Please check your email to verify your account before logging in." }
             });
 

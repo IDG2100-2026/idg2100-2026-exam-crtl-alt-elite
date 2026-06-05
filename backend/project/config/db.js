@@ -1,4 +1,3 @@
-/* this is the same code as the inclass code we've been doing in IDG2100 Fullstack 2026*/
 import mongoose from "mongoose";
 
 const { DB_HOSTNAME, DB_PORT, DB_NAME} = process.env;

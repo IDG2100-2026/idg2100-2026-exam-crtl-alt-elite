@@ -5,8 +5,6 @@ import validate from "../../middleware/validate.js";
 
 const gameVariantRouter = express.Router();
 
-/* Public */
-// GET /api/variants
 gameVariantRouter.get(
     "/",
     gameVariantValidator.validateGetVariants(),

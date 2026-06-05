@@ -1,28 +1,6 @@
-// copied from oblig 3 
 import styles from './StaticPage.module.css';
 
-// const VARIANTS = [
-//   { rounds: 3, straights: false, time: 3 },
-//   { rounds: 3, straights: false, time: 10 },
-//   { rounds: 3, straights: false, time: 30 },
-//   { rounds: 3, straights: true, time: 3 },
-//   { rounds: 3, straights: true, time: 10 },
-//   { rounds: 3, straights: true, time: 30 },
-//   { rounds: 5, straights: false, time: 3 },
-//   { rounds: 5, straights: false, time: 10 },
-//   { rounds: 5, straights: false, time: 30 },
-//   { rounds: 5, straights: true, time: 3 },
-//   { rounds: 5, straights: true, time: 10 },
-//   { rounds: 5, straights: true, time: 30 },
-//   { rounds: 7, straights: false, time: 3 },
-//   { rounds: 7, straights: false, time: 10 },
-//   { rounds: 7, straights: false, time: 30 },
-//   { rounds: 7, straights: true, time: 3 },
-//   { rounds: 7, straights: true, time: 10 },
-//   { rounds: 7, straights: true, time: 30 }
-// ];
 
-// Hand rankings from constants.js
 const HANDS = [
   { name: 'Repóker', desc: 'Five of a kind - the best possible hand.' },
   { name: 'Póker', desc: 'Four of a kind.' },
@@ -96,20 +74,7 @@ export default function AboutDicePage() {
             <li><strong>Number of Players:</strong> 2, 3, or 5 players.</li>
             <li><strong>Buy-in:</strong> 1, 10 or 50 points to buy into a game.</li>
           </ul>
-          {/* <table className={styles.variantTable}>
-            <thead>
-              <tr><th>Best of</th><th>Straights</th><th>Seconds/Round</th></tr>
-            </thead>
-            <tbody>
-              {VARIANTS.map((v, i) => (
-                <tr key={i}>
-                  <td>{v.rounds}</td>
-                  <td>{v.straights ? 'Yes' : 'No'}</td>
-                  <td>{v.time}s</td>
-                </tr>
-              ))}
-            </tbody>
-          </table> */}
+
         </section>
 
         <section className={styles.section}>

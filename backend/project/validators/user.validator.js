@@ -10,15 +10,13 @@ import {
     MAX_LENGTH_ABOUT_ME
 } from "../config/constants.js";
 
-// Validates the userId route parameter
-// Used in getUser, updateUser and banUser
 export function validateUserId() {
     return [
         param("id")
             .isInt({ min: MIN_ID, max: Number.MAX_SAFE_INTEGER })
             .withMessage("User ID must be a valid integer")
-            .bail() // Stop checking if the above fails
-            .toInt() // Convert to integer for all following checks
+            .bail()
+            .toInt()
             .custom(async (id) => {
                 const user = await findUserById(id);
                 if (!user) throw new Error("The user was not found");
@@ -26,11 +24,9 @@ export function validateUserId() {
     ];
 }
 
-// GET /api/users?search=alice&page=1&limit=20
-// The limit for the pagination can be changed
 export function validateGetUsers() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("search")
             .optional()
@@ -39,9 +35,6 @@ export function validateGetUsers() {
     ];
 }
 
-// PUT /api/users/:id
-// Validates the request body for updating a user profile
-// All fields are optional since the user can update one or more fields at a time
 export function validateUpdateUser() {
     return [
         body("email")

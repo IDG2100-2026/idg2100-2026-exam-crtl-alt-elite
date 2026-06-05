@@ -17,7 +17,6 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Edit form state
     const [editing, setEditing] = useState(false);
     const [editEmail, setEditEmail] = useState('');
     const [editAbout, setEditAbout] = useState('');
@@ -26,12 +25,10 @@ export default function ProfilePage() {
     const [saveError, setSaveError] = useState(null);
     const [saveOk, setSaveOk] = useState(false);
 
-    // Avatar upload state
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [avatarError, setAvatarError] = useState(null);
     const fileInputRef = useRef(null);
 
-    // Recent games pagination
     const [gamesShown, setGamesShown] = useState(GAMES_PER_PAGE);
 
     useEffect(() => {
@@ -108,7 +105,6 @@ export default function ProfilePage() {
     return (
         <div className={styles.page}>
 
-            {/* Profile header */}
             <div className={styles.profileHeader}>
                 <div className={styles.avatarWrapper}>
                     {user.avatar ? (
@@ -161,7 +157,6 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            {/* Edit form */}
             {editing && isOwnProfile && (
                 <form onSubmit={handleSave} className={styles.editForm}>
                     <h2>Edit Profile</h2>
@@ -201,7 +196,6 @@ export default function ProfilePage() {
                 </form>
             )}
 
-            {/* Stats */}
             <section className={styles.section}>
                 <h2>Stats</h2>
                 <div className={styles.statsGrid}>
@@ -228,7 +222,6 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            {/* Last 30 days */}
             <section className={styles.section}>
                 <h2>Last 30 days</h2>
                 <div className={styles.statsGrid}>
@@ -247,7 +240,6 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            {/* Trophies */}
             {user.trophies && user.trophies.length > 0 && (
                 <section className={styles.section}>
                     <h2>Trophies</h2>
@@ -270,7 +262,6 @@ export default function ProfilePage() {
                 </section>
             )}
 
-            {/* Recent Games */}
             <section className={styles.section}>
                 <h2>Recent Games</h2>
                 {visibleGames.length === 0 ? (

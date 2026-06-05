@@ -38,7 +38,6 @@ export default function NavBar() {
         Spanish Poker Dice
       </Link>
 
-      {/* Desktop links */}
       <div className={Styles.links}>
         <NavLink className={styleIt} to="/tournaments">Tournaments</NavLink>
         <NavLink className={styleIt} to="/lobby">Lobby</NavLink>
@@ -69,7 +68,6 @@ export default function NavBar() {
       </button>
       {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
 
-      {/* Hamburger button, mobile only */}
       <button
         className={Styles.hamburger}
         onClick={() => setOpen(o => !o)}
@@ -80,7 +78,6 @@ export default function NavBar() {
         <span className={`${Styles.bar} ${open ? Styles.bar3Open : ""}`} />
       </button>
 
-      {/* Mobile menu */}
       {open && (
         <div className={Styles.mobileMenu}>
           <NavLink className={styleIt} to="/tournaments" onClick={close}>Tournaments</NavLink>

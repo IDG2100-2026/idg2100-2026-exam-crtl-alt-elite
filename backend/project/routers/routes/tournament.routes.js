@@ -9,8 +9,6 @@ const tournamentRouter = express.Router();
 
 tournamentRouter.use(identifyUser);
 
-/* Public - anyone can view tournaments */
-// GET /api/tournaments
 tournamentRouter.get(
     "/",
     tournamentValidator.validateGetTournaments(),
@@ -18,7 +16,6 @@ tournamentRouter.get(
     tournamentController.getAllTournaments
 );
 
-// GET /api/tournaments/:id
 tournamentRouter.get(
     "/:id",
     tournamentValidator.validateTournamentId(),
@@ -26,7 +23,6 @@ tournamentRouter.get(
     tournamentController.getTournament
 );
 
-// GET /api/tournaments/:id/standings
 tournamentRouter.get(
     "/:id/standings",
     tournamentValidator.validateTournamentId(),
@@ -34,7 +30,6 @@ tournamentRouter.get(
     tournamentController.getTournamentStandings
 );
 
-// GET /api/tournaments/:id/games
 tournamentRouter.get(
     "/:id/games",
     tournamentValidator.validateTournamentId(),
@@ -42,8 +37,6 @@ tournamentRouter.get(
     tournamentController.getTournamentGames
 );
 
-/* Registered and verified users only */
-// POST /api/tournaments/:id/players
 tournamentRouter.post(
     "/:id/players",
     requireUser,
@@ -53,7 +46,6 @@ tournamentRouter.post(
     tournamentController.joinTournament
 );
 
-// DELETE /api/tournaments/:id/players/:userId
 tournamentRouter.delete(
     "/:id/players/:userId",
     requireUser,
@@ -63,8 +55,6 @@ tournamentRouter.delete(
     tournamentController.leaveTournament
 );
 
-/* Admin only */
-// POST /api/tournaments
 tournamentRouter.post(
     "/",
     requireAdmin,
@@ -74,7 +64,6 @@ tournamentRouter.post(
     tournamentController.createTournament
 );
 
-// PUT /api/tournaments/:id
 tournamentRouter.put(
     "/:id",
     requireAdmin,
@@ -85,7 +74,6 @@ tournamentRouter.put(
     tournamentController.updateTournament
 );
 
-// PUT /api/tournaments/:id/cancellation
 tournamentRouter.put(
     "/:id/cancellation",
     requireAdmin,
@@ -94,7 +82,6 @@ tournamentRouter.put(
     tournamentController.cancelTournament
 );
 
-// DELETE /api/tournaments/:id
 tournamentRouter.delete(
     "/:id",
     requireAdmin,

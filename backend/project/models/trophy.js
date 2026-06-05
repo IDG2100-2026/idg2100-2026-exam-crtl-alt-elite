@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
 
-import { 
+import {
     MIN_TITLE_LENGTH,
     MAX_TITLE_LENGTH
 } from "../config/constants.js";
 
 export const trophySchema = new mongoose.Schema({
-    // Title of the trophy
     title: {
         type: String,
         required: true,
@@ -15,7 +14,6 @@ export const trophySchema = new mongoose.Schema({
         maxLength: MAX_TITLE_LENGTH
     },
 
-    // URL or file path to the trophy image
     image: {
         type: String,
         trim: true

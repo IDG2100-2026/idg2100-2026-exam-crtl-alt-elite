@@ -5,8 +5,6 @@ import { MIN_COMMENT_LENGTH, MAX_COMMENT_LENGTH } from "../config/constants.js";
 
 const VALID_TARGET_TYPES = ["game", "tournament"];
 
-// Validates the commentId route parameter
-// Used in deleteComment
 export function validateCommentId() {
     return [
         param("id")
@@ -15,11 +13,9 @@ export function validateCommentId() {
     ];
 }
 
-// GET /api/comments?targetId=123&targetType=game
-// Validates the query parameters for getting comments
 export function validateGetComments() {
     return [
-        ...validatePagination(), // Shared pagination validators
+        ...validatePagination(),
 
         query("targetId")
             .notEmpty()
@@ -34,16 +30,12 @@ export function validateGetComments() {
     ];
 }
 
-// GET /api/comments/recent
-// Validates pagination query parameters for getting recent comments
 export function validateGetRecentComments() {
     return [
-        ...validatePagination() // Shared pagination validators
+        ...validatePagination()
     ];
 }
 
-// POST /api/comments
-// Validates the request body for creating a comment
 export function validateCreateComment() {
     return [
         body("targetId")

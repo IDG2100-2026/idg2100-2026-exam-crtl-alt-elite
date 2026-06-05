@@ -5,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Hero */
 .hero {
     position: relative;
     min-height: 80vh;
@@ -60,7 +59,6 @@
     justify-content: center;
 }
 
-/* Buttons */
 .btnCreate {
     font-size: 1.2rem;
     padding: 0.8rem 1.6rem;
@@ -94,7 +92,6 @@
     border: 1px solid rgba(255,255,255,0.3);
 }
 
-/* Sections */
 .lobbySection,
 .topGamesSection {
     padding: 4rem 1.5rem;
@@ -160,7 +157,6 @@
     color: var(--dark-text-muted);
 }
 
-/* Activity section */
 .activitySection {
     padding: 4rem 1.5rem;
     background: var(--brand-cream);

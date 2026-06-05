@@ -8,9 +8,6 @@ const {
     FRONTEND_URL
 } = process.env;
 
-// Creates a nodemailer transporter using credentials from .env
-// For development I'm using Ethereal (https://ethereal.email) for testing
-// In production it would be replaced with a real SMTP provider
 const transporter = nodemailer.createTransport({
     host: EMAIL_HOST,
         port: EMAIL_PORT,
@@ -20,8 +17,6 @@ const transporter = nodemailer.createTransport({
         }
 });
 
-// Sends a verification email to a newly registered user
-// The link points to the frontend, which then calls GET /api/auth/email-verification?token=...
 export async function sendVerificationEmail(email, token) {
     const verificationUrl = `${FRONTEND_URL}/verify-email?token=${token}`;
 

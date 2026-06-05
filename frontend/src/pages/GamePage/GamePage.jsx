@@ -59,7 +59,6 @@ export default function GamePage() {
                 const data = await gameApi.getById(id);
                 setGame(data);
                 setError(null);
-                // Stop polling once game has started or finished
                 if (data.status !== 'room') {
                     console.log('Stopping poll, game status:', data.status);
                     clearInterval(pollRef.current);
@@ -76,32 +75,26 @@ export default function GamePage() {
                 const data = await commentApi.getAll(id, 'game');
                 setComments(data.comments ?? []);
             } catch {
-                // silently fail
             }
         }
 
         fetchGame();
         fetchComments();
 
-        // Poll every 15 seconds while game is in room status
         pollRef.current = setInterval(fetchGame, 15000);
         return () => clearInterval(pollRef.current);
     }, [id]);
 
-    // Join WebSocket comment room for live comments
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
 
-        // Join the comment room for this game
         socket.emit('join_comments', { targetType: 'game', targetId: Number(id) });
 
-        // Listen for new comments
         socket.on('new_comment', (newComment) => {
             setComments(prev => [...prev, newComment]);
         });
 
-        // Listen for deleted comments
         socket.on('comment_deleted', ({ commentId }) => {
             setComments(prev => prev.filter(c => c._id !== commentId));
         });
@@ -135,8 +128,6 @@ export default function GamePage() {
             const socket = getSocket();
             if (!socket) throw new Error("Not connected to server.");
 
-            // Post via WebSocket so the broadcast fires to all users in the room
-            // REST endpoint doesn't trigger the broadcast
             socket.emit("post_comment", {
                 targetType: "game",
                 targetId: Number(id),
@@ -155,7 +146,6 @@ export default function GamePage() {
     if (error) return <p style={{ padding: '2rem', color: 'red' }}>{error}</p>;
     if (!game) return null;
 
-    // New game model uses players array instead of playerOne/playerTwo
     const p0 = game.players?.[0];
     const p1 = game.players?.[1];
     const p0Name = p0?.username || 'Unknown';
@@ -186,7 +176,6 @@ export default function GamePage() {
 
             <div className={styles.layout}>
 
-                {/* Game board */}
                 <div className={styles.boardArea}>
                     <div className={styles.board} style={{ background: boardColor }}>
                         <div className={styles.players}>
@@ -246,7 +235,6 @@ export default function GamePage() {
                     </div>
                 </div>
 
-                {/* Comments sidebar */}
                 <aside className={styles.sidebar}>
                     <h2 className={styles.sidebarTitle}>Comments</h2>
                     <CommentList comments={comments} />
